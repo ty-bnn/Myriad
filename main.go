@@ -4,7 +4,7 @@ import(
 	"fmt"
 	"os"
 	"bufio"
-	"dcc/parser"
+	"dcc/tokenizer"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 
 	lines := readLinesFromSample(samplePath)
 
-	tokens, err := parser.Parse(lines)
+	tokens, err := tokenizer.Tokenize(lines)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
