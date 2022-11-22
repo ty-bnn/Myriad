@@ -1,59 +1,75 @@
 package tokenizer
 
-import(
+type TokenKind int
+
+const (
+	SIMPORT TokenKind = iota
+	SFROM
+	SMAIN
+	SLPAREN
+	SRPAREN
+	SCOMMA
+	SARRANGE
+	SLBRACE
+	SRBRACE
+	SSTRING
+	SDFCOMMAND
+	SDFARG
+	SIDENTIFIER
 )
 
 type Token struct {
 	Content string
-	Kind string
+	Kind TokenKind
+	Line int
 }
 
 func Tokenize(lines []string) ([]Token, error) {
 	var tokens []Token
 
-	for _, line := range lines {
+	for line, lineStr := range lines {
 		var token Token
 		var err error 
-		i := 0
-		for i < len(line) {
-			switch line[i] {
+		index := 0
+		for index < len(lineStr) {
+			switch lineStr[index] {
 				case ' ':
-					i++
+					index++
 					continue
 				/*
 				Read symbols '(', ')', ',', "[]"", '{', '}'
 				*/
 				case '(', ')', ',', '[', '{', '}':
-					i, token, err = readSymbols(i, line)
+					index, token, err = readSymbols(index, lineStr, line)
 				/*
 				Read reserved words ("import", "from", "main")
 				If not reserved words, read identifiers starts from 'i', 'f', 'm'.
 				*/
 				case 'i', 'f', 'm':
-					i, token, err = readReservedWords(i, line)
+					index, token, err = readReservedWords(index, lineStr, line)
 					if err != nil {
-						i, token, err = readIdentifier(i, line)
+						index, token, err = readIdentifier(index, lineStr, line)
 					}				
 				/*
 				Read Dfile commands.
 				And Read Dfile arguments.
 				*/
 				case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'R', 'S', 'U', 'V', 'W':
-					i, token, err = readDfCommands(i, line)
+					index, token, err = readDfCommands(index, lineStr, line)
 					if err == nil {
 						tokens = append(tokens, token)
-						i, token, err = readDfArgs(i, line)
+						index, token, err = readDfArgs(index, lineStr, line)
 					}
 				/*
 				Read strings start from " and ends at ".
 				*/
 				case '"':
-					i, token, err = readString(i, line)
+					index, token, err = readString(index, lineStr, line)
 				/*
 				Read identifiers.
 				*/
 				default:
-					i, token, err = readIdentifier(i, line)
+					index, token, err = readIdentifier(index, lineStr, line)
 			}
 
 			if err != nil {
