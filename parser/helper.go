@@ -280,6 +280,7 @@ func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 
 // Dfile文
 func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
+	var err error
 	// Df命令
 	if tokens[index].Kind != tokenizer.SDFCOMMAND {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd in line %d", tokens[index].Line))
@@ -288,8 +289,36 @@ func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// Df引数
-	if tokens[index].Kind != tokenizer.SDFARG {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile argument in line %d", tokens[index].Line))
+	index, err = dfArgs(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	return index, nil
+}
+
+// Df引数部
+func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
+	var err error
+	index, err = dfArg(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	for ;; {
+		index, err = dfArg(tokens, index)
+		if err != nil {
+			break
+		}
+	}
+
+	return index, nil
+}
+
+// Df引数
+func dfArg(tokens []tokenizer.Token, index int) (int, error) {
+	if tokens[index].Kind != tokenizer.SDFARG && tokens[index].Kind != tokenizer.SASSIGNVARIABLE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find Df argument in line %d", tokens[index].Line))
 	}
 
 	index++

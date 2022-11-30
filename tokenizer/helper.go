@@ -85,7 +85,7 @@ func readDfArgs(index int, lineStr string, line int) (int, Token, error) {
 			index++
 		}
 		if index != len(lineStr) {
-			return index + 1, Token{lineStr[start + 2: index], SVARIABLE, line + 1}, nil
+			return index + 1, Token{lineStr[start + 2: index], SASSIGNVARIABLE, line + 1}, nil
 		} else {
 			return index, Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, lineStr))
 		}

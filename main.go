@@ -5,7 +5,7 @@ import(
 	"os"
 	"bufio"
 	"dcc/tokenizer"
-	// "dcc/parser"
+	"dcc/parser"
 	// "dcc/compiler"
 )
 
@@ -25,10 +25,10 @@ func main() {
 		fmt.Printf("%30s\t%10d\n", token.Content, token.Kind)
 	}
 
-	// err = parser.Parse(tokens)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	err = parser.Parse(tokens)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// dfCodes, err := compiler.Generate(tokens)
 	// if err != nil {

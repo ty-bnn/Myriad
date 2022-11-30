@@ -16,7 +16,7 @@ const (
 	SDFCOMMAND
 	SDFARG
 	SIDENTIFIER
-	SVARIABLE
+	SASSIGNVARIABLE
 )
 
 type Token struct {
