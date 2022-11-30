@@ -1,13 +1,13 @@
 import installPackage from "./sample02.ty"
 
+copyFileFromLocal() {
+    WORKDIR /app
+    COPY . /app
+}
+
 main() {
     FROM python:alpine
     installPackage("httpd")
     copyFileFromLocal()
     CMD ["python","-m","http.server","--cgi"]
-}
-
-copyFileFromLocal() {
-    WORKDIR /app
-    COPY . /app
 }
