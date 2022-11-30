@@ -16,6 +16,7 @@ const (
 	SDFCOMMAND
 	SDFARG
 	SIDENTIFIER
+	SVARIABLE
 )
 
 type Token struct {
@@ -57,8 +58,19 @@ func Tokenize(lines []string) ([]Token, error) {
 				case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'R', 'S', 'U', 'V', 'W':
 					index, token, err = readDfCommands(index, lineStr, line)
 					if err == nil {
-						tokens = append(tokens, token)
-						index, token, err = readDfArgs(index, lineStr, line)
+						for index < len(lineStr) {
+							tokens = append(tokens, token)
+							for index < len(lineStr) {
+								if lineStr[index] != ' ' {
+									break
+								}
+								index++
+							}
+							index, token, err = readDfArgs(index, lineStr, line)
+							if err != nil {
+								break
+							}
+						}
 					}
 				/*
 				Read strings start from " and ends at ".

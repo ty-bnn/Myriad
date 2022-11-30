@@ -74,19 +74,34 @@ func readDfCommands(index int, lineStr string, line int) (int, Token, error) {
 }
 
 func readDfArgs(index int, lineStr string, line int) (int, Token, error) {
-	for index < len(lineStr) {
-		if lineStr[index] == ' ' {
+	start := index
+
+	if lineStr[index : index + 2] == "${" {
+		index += 2
+		for index < len(lineStr) {
+			if lineStr[index] == '}' {
+				break
+			}
 			index++
-			continue
+		}
+		if index != len(lineStr) {
+			return index + 1, Token{lineStr[start + 2: index], SVARIABLE, line + 1}, nil
 		} else {
-			break
+			return index, Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, lineStr))
+		}
+	} else {
+		for index < len(lineStr) - 1 {
+			if lineStr[index : index + 2] == "${" {
+				break
+			}
+			index++
+		}
+		if index == len(lineStr) - 1 {
+			return len(lineStr), Token{lineStr[start : len(lineStr)], SDFARG, line + 1}, nil
+		} else {
+			return index, Token{lineStr[start : index], SDFARG, line + 1}, nil
 		}
 	}
-	if index != len(lineStr) {
-		return len(lineStr), Token{lineStr[index : len(lineStr)], SDFARG, line + 1}, nil
-	}
-	
-	return index, Token{}, errors.New(fmt.Sprintf("DfArg's index: %d find invalid token in \"%s\".", index, lineStr))
 }
 
 func readString(index int, lineStr string, line int) (int, Token, error) {
