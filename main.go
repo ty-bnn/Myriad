@@ -3,15 +3,21 @@ package main
 import(
 	"fmt"
 	"os"
-	"bufio"
+	"errors"
+
+	"dcc/types"
+	"dcc/others"
 	"dcc/tokenizer"
 	"dcc/parser"
+	"dcc/compiler"
 )
 
 func main() {
-	samplePath := "sample/sample01.ty"
-
-	lines := readLinesFromSample(samplePath)
+	lines, err := others.ReadLinesFromFile(os.Args[1])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	tokens, err := tokenizer.Tokenize(lines)
 	if err != nil {
@@ -27,28 +33,26 @@ func main() {
 	err = parser.Parse(tokens)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
-}
 
-func readLinesFromSample(samplePath string) []string {
-	var lines []string
+	functionCodeMap := map[string][]types.Code{}
+	functionArgMap := map[string][]types.Argument{}
 
-	// Open file.
-	fp, err := os.Open(samplePath)
+	err = compiler.Compile(tokens, &functionArgMap, &functionCodeMap)
 	if err != nil {
-		fmt.Println("cannot open", samplePath)
-	}
-	defer fp.Close()
-
-	// Read sample code line by line.
-	scanner := bufio.NewScanner(fp)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err = scanner.Err(); err != nil {
-		fmt.Println("cannot read lines from", samplePath)
-		os.Exit(0)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
-	return lines
+	if _, ok := functionCodeMap["main"]; !ok {
+		fmt.Println(errors.New(fmt.Sprintf("syntax error: cannot find main function")))
+		os.Exit(1)
+	}
+
+	err = others.WriteFile(functionCodeMap["main"])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
