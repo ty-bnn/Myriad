@@ -11,7 +11,11 @@ func program(tokens []types.Token, index int) error {
 	var err error
 
 	// { 関数インポート文 }
-	for tokens[index].Kind == types.SIMPORT {
+	for ;; {
+		if index >= len(tokens) || tokens[index].Kind != types.SIMPORT {
+			break
+		}
+
 		index, err = importFunc(tokens, index)
 		if err != nil {
 			return err
@@ -19,8 +23,8 @@ func program(tokens []types.Token, index int) error {
 	}
 
 	// { 関数 }
-	for index < len(tokens) {
-		if tokens[index].Kind != types.SIDENTIFIER {
+	for ;; {
+		if index >= len(tokens) || tokens[index].Kind != types.SIDENTIFIER {
 			break
 		}
 
@@ -47,8 +51,8 @@ func program(tokens []types.Token, index int) error {
 func importFunc(tokens []types.Token, index int) (int, error) {
 	var err error
 	// "import"
-	if tokens[index].Kind != types.SIMPORT {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'import' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SIMPORT {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'import'"))
 	}
 
 	index++
@@ -60,8 +64,8 @@ func importFunc(tokens []types.Token, index int) (int, error) {
 	}
 
 	// "from"
-	if tokens[index].Kind != types.SFROM {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'from' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SFROM {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'from'"))
 	}
 
 	index++
@@ -77,8 +81,8 @@ func importFunc(tokens []types.Token, index int) (int, error) {
 
 // ファイル名
 func fileName(tokens []types.Token, index int) (int, error) {
-	if tokens[index].Kind != types.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
 	index++
@@ -116,8 +120,8 @@ func mainFunction(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "main"
-	if tokens[index].Kind != types.SMAIN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'main' to declare in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SMAIN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'main' to declare"))
 	}
 
 	index++
@@ -142,14 +146,14 @@ func argumentDecralation(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "("
-	if tokens[index].Kind != types.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '(' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SLPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
 	index++
 
 	// 引数群
-	if 	tokens[index].Kind == types.SIDENTIFIER {
+	if 	index < len(tokens) && tokens[index].Kind == types.SIDENTIFIER {
 		index, err = arguments(tokens, index)
 		if err != nil {
 			return index, err
@@ -157,8 +161,8 @@ func argumentDecralation(tokens []types.Token, index int) (int, error) {
 	}
 
 	// ")"
-	if tokens[index].Kind != types.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SRPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
 	index++
@@ -178,7 +182,7 @@ func arguments(tokens []types.Token, index int) (int, error) {
 
 	for ;; {
 		// ","
-		if tokens[index].Kind != types.SCOMMA {
+		if index >= len(tokens) || tokens[index].Kind != types.SCOMMA {
 			break
 		}
 
@@ -205,7 +209,7 @@ func variable(tokens []types.Token, index int) (int, error) {
 	}
 
 	// "[]"
-	if tokens[index].Kind == types.SARRANGE {
+	if index < len(tokens) && tokens[index].Kind == types.SARRANGE {
 		index++
 	}
 
@@ -217,8 +221,8 @@ func functionDescription(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "{"
-	if tokens[index].Kind != types.SLBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 
 	index++
@@ -230,8 +234,8 @@ func functionDescription(tokens []types.Token, index int) (int, error) {
 	}
 
 	// "}"
-	if tokens[index].Kind != types.SRBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SRBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
 	index++
@@ -250,7 +254,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER {
+		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER) {
 			break
 		}
 			
@@ -267,20 +271,20 @@ func description(tokens []types.Token, index int) (int, error) {
 func descriptionBlock(tokens []types.Token, index int) (int, error) {
 	var err error
 
-	if tokens[index].Kind == types.SDFCOMMAND {
+	if index < len(tokens) && tokens[index].Kind == types.SDFCOMMAND {
 		// Dfile文
 		index, err = dockerFile(tokens, index)
 		if err != nil {
 			return index, err
 		}
-	} else if tokens[index].Kind == types.SIDENTIFIER {
+	} else if index < len(tokens) && tokens[index].Kind == types.SIDENTIFIER {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	} else {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a description block in line %d", tokens[index].Line))
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
 	}
 
 	return index, nil
@@ -290,8 +294,8 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 func dockerFile(tokens []types.Token, index int) (int, error) {
 	var err error
 	// Df命令
-	if tokens[index].Kind != types.SDFCOMMAND {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SDFCOMMAND {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
 	}
 
 	index++
@@ -314,7 +318,7 @@ func dfArgs(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind == types.SDFARG || tokens[index].Kind == types.SASSIGNVARIABLE {
+		if index < len(tokens) && (tokens[index].Kind == types.SDFARG || tokens[index].Kind == types.SASSIGNVARIABLE) {
 			index, err = dfArg(tokens, index)
 			if err != nil {
 				return index, err
@@ -329,8 +333,8 @@ func dfArgs(tokens []types.Token, index int) (int, error) {
 
 // Df引数
 func dfArg(tokens []types.Token, index int) (int, error) {
-	if tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SASSIGNVARIABLE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find Df argument in line %d", tokens[index].Line))
+	if index >= len(tokens) || (tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SASSIGNVARIABLE) {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find Df argument"))
 	}
 
 	index++
@@ -349,14 +353,14 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 	}
 
 	// "("
-	if tokens[index].Kind != types.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '(' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SLPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
 	index++
 
 	// 文字列の並び
-	if tokens[index].Kind == types.SSTRING {
+	if index < len(tokens) && tokens[index].Kind == types.SSTRING {
 		index, err = rowOfStrings(tokens, index)
 		if err != nil {
 			return index, err
@@ -364,8 +368,8 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 	}
 
 	// ")"
-	if tokens[index].Kind != types.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')' in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SRPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
 	index++
@@ -376,21 +380,21 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 // 文字列の並び
 func rowOfStrings(tokens []types.Token, index int) (int, error) {
 	// 文字列
-	if tokens[index].Kind != types.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
 	}
 
 	index++
 
 	for ;; {
-		if tokens[index].Kind != types.SCOMMA {
+		if index >= len(tokens) || tokens[index].Kind != types.SCOMMA {
 			break
 		}
 
 		index++
 
-		if tokens[index].Kind != types.SSTRING {
-			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string in line %d", tokens[index].Line))
+		if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
+			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
 		}
 
 		index++
@@ -401,8 +405,8 @@ func rowOfStrings(tokens []types.Token, index int) (int, error) {
 
 // 関数名
 func functionName(tokens []types.Token, index int) (int, error) {
-	if tokens[index].Kind != types.SIDENTIFIER {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SIDENTIFIER {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
 	index++
@@ -412,8 +416,8 @@ func functionName(tokens []types.Token, index int) (int, error) {
 
 // 変数名
 func variableName(tokens []types.Token, index int) (int, error) {
-	if tokens[index].Kind != types.SIDENTIFIER {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
+	if index >= len(tokens) || tokens[index].Kind != types.SIDENTIFIER {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
 	index++

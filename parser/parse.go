@@ -6,6 +6,9 @@ import (
 
 func Parse(tokens []types.Token) (error) {
 	err := program(tokens, 0)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
