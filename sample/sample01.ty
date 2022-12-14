@@ -5,9 +5,9 @@ copyFileFromLocal(filePath) {
     COPY . ${filePath}
 }
 
-main() {
-    FROM python:alpine
+main(arg) {
+    FROM python:${arg}
     installPackage("httpd")
     copyFileFromLocal("hello.go")
-    CMD ["python","-m","http.server","--cgi"]
+    CMD ["python", "-m", "http.server", "--cgi"]
 }
