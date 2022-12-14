@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"os"
 	"errors"
 
 	"dcc/types"
@@ -172,14 +173,16 @@ func argumentDecralation(tokens []types.Token, index int) (int, error) {
 // 引数群
 func arguments(tokens []types.Token, index int) (int, error) {
 	var err error
+	argIndex := 2
 
 	// 変数
-	index, err = variable(tokens, index)
+	index, err = variable(tokens, index, argIndex)
 	if err != nil {
 		return index, err
 	}
 
 	for ;; {
+		argIndex++
 		// ","
 		if tokens[index].Kind != types.SCOMMA {
 			break
@@ -188,7 +191,7 @@ func arguments(tokens []types.Token, index int) (int, error) {
 		index++
 		
 		// 変数
-		index, err = variable(tokens, index)
+		index, err = variable(tokens, index, argIndex)
 		if err != nil {
 			return index, err
 		}
@@ -198,12 +201,22 @@ func arguments(tokens []types.Token, index int) (int, error) {
 }
 
 // 変数
-func variable(tokens []types.Token, index int) (int, error) {
+func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 	var err error
 
 	// 変数名
 	name := tokens[index].Content
-	argument := types.Argument{Name: name, Value: "", Kind: types.STRING}
+	var argument types.Argument
+	if functionPointer == "main" {
+		if argIndex < len(os.Args){
+			argument = types.Argument{Name: name, Value: os.Args[argIndex], Kind: types.STRING}
+		} else {
+			return index, errors.New(fmt.Sprintf("semantic error: not enough argument value in line %d", tokens[index].Line))
+		}
+	} else {
+		argument = types.Argument{Name: name, Value: "", Kind: types.STRING}
+	}
+
 	index, err = variableName(tokens, index)
 	if err != nil {
 		return index, err
@@ -334,10 +347,12 @@ func dfArg(tokens []types.Token, index int) (int, error) {
 	var code types.Code
 	if tokens[index].Kind == types.SDFARG {
 		code = types.Code{Code: content, Kind: types.ROW}
-	} else if tokens[index].Kind == types.SASSIGNVARIABLE {
+	} else if tokens[index].Kind == types.SASSIGNVARIABLE && functionPointer == "main" {
+		code = types.Code{Code: getArgumentValue("main", content)}
+	} else {
 		code = types.Code{Code: content, Kind: types.VAR}
 	}
-
+	
 	(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], code)
 	index++
 
