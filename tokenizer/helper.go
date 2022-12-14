@@ -14,6 +14,12 @@ func readReservedWords(index int, lineStr string, line int) (int, types.Token, e
 		return index + 4, types.Token{"from", types.SFROM, line + 1}, nil
 	} else if (lineStr[index : index + 4] == "main") {
 		return index + 4, types.Token{"main", types.SMAIN, line + 1}, nil
+	} else if (lineStr[index : index + 2] == "if") {
+		return index + 2, types.Token{"if", types.SIF, line + 1}, nil
+	} else if (lineStr[index : index + 7] == "else if") {
+		return index + 7, types.Token{"else if", types.SELIF, line + 1}, nil
+	} else if (lineStr[index : index + 4] == "else") {
+		return index + 4, types.Token{"else", types.SELSE, line + 1}, nil
 	}
 
 	return index, types.Token{}, errors.New(fmt.Sprintf("ReservedWords'index: %d find invalid token in \"%s\".", index, lineStr)) 
@@ -32,6 +38,10 @@ func readSymbols(index int, lineStr string, line int) (int, types.Token, error) 
 		return index + 1, types.Token{"{", types.SLBRACE, line + 1}, nil
 	} else if (lineStr[index] == '}') {
 		return index + 1, types.Token{"}", types.SRBRACE, line + 1}, nil
+	} else if (lineStr[index : index + 1] == "==") {
+		return index + 2, types.Token{"==", types.SEQUAL, line + 1}, nil
+	} else if (lineStr[index : index + 1] == "!=") {
+		return index + 2, types.Token{"!=", types.SNOTEQUAL, line + 1}, nil
 	}
 
 	return index, types.Token{}, errors.New(fmt.Sprintf("Symbols'index: %d find invalid token in \"%s\".", index, lineStr))
