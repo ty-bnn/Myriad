@@ -1,13 +1,21 @@
 package compiler
 
 import (
-	"dcc/tokenizer"
+	"dcc/types"
 )
 
-var dfCodes []string
+var functionArgMap *map[string][]types.Argument
+var functionCodeMap *map[string][]types.Code
+var functionPointer string
 
-func Generate(tokens []tokenizer.Token) ([]string, error) {
+func Compile(tokens []types.Token, faMap *map[string][]types.Argument, fcMap *map[string][]types.Code) (error) {
+	functionArgMap = faMap
+	functionCodeMap = fcMap
+	
 	err := program(tokens, 0)
+	if err != nil {
+		return err
+	}
 
-	return dfCodes, err
+	return err
 }

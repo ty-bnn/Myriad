@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"errors"
 
-	"dcc/tokenizer"
+	"dcc/types"
 )
 
-func program(tokens []tokenizer.Token, index int) error {
+func program(tokens []types.Token, index int) error {
 	var err error
 
 	// { 関数インポート文 }
-	for tokens[index].Kind == tokenizer.SIMPORT {
+	for tokens[index].Kind == types.SIMPORT {
 		index, err = importFunc(tokens, index)
 		if err != nil {
 			return err
@@ -19,13 +19,21 @@ func program(tokens []tokenizer.Token, index int) error {
 	}
 
 	// { 関数 }
-	for tokens[index].Kind == tokenizer.SIDENTIFIER {
+	for index < len(tokens) {
+		if tokens[index].Kind != types.SIDENTIFIER {
+			break
+		}
+
 		index, err = function(tokens, index)
 		if err != nil {
 			return err
 		}
 	}
 
+	if index >= len(tokens) || tokens[index].Kind != types.SMAIN {
+		return nil
+	}
+	
 	// メイン部
 	index, err = mainFunction(tokens, index)
 	if err != nil {
@@ -36,10 +44,10 @@ func program(tokens []tokenizer.Token, index int) error {
 }
 
 // 関数インポート文
-func importFunc(tokens []tokenizer.Token, index int) (int, error) {
+func importFunc(tokens []types.Token, index int) (int, error) {
 	var err error
 	// "import"
-	if tokens[index].Kind != tokenizer.SIMPORT {
+	if tokens[index].Kind != types.SIMPORT {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'import' in line %d", tokens[index].Line))
 	}
 
@@ -52,7 +60,7 @@ func importFunc(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// "from"
-	if tokens[index].Kind != tokenizer.SFROM {
+	if tokens[index].Kind != types.SFROM {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'from' in line %d", tokens[index].Line))
 	}
 
@@ -68,8 +76,8 @@ func importFunc(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // ファイル名
-func fileName(tokens []tokenizer.Token, index int) (int, error) {
-	if tokens[index].Kind != tokenizer.SSTRING {
+func fileName(tokens []types.Token, index int) (int, error) {
+	if tokens[index].Kind != types.SSTRING {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
 	}
 
@@ -79,7 +87,7 @@ func fileName(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 関数
-func function(tokens []tokenizer.Token, index int) (int, error) {
+func function(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// 関数名
@@ -104,11 +112,11 @@ func function(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // メイン部
-func mainFunction(tokens []tokenizer.Token, index int) (int, error) {
+func mainFunction(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "main"
-	if tokens[index].Kind != tokenizer.SMAIN {
+	if tokens[index].Kind != types.SMAIN {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'main' to declare in line %d", tokens[index].Line))
 	}
 
@@ -130,18 +138,18 @@ func mainFunction(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 引数宣言部
-func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
+func argumentDecralation(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "("
-	if tokens[index].Kind != tokenizer.SLPAREN {
+	if tokens[index].Kind != types.SLPAREN {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '(' in line %d", tokens[index].Line))
 	}
 
 	index++
 
 	// 引数群
-	if 	tokens[index].Kind == tokenizer.SIDENTIFIER {
+	if 	tokens[index].Kind == types.SIDENTIFIER {
 		index, err = arguments(tokens, index)
 		if err != nil {
 			return index, err
@@ -149,7 +157,7 @@ func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// ")"
-	if tokens[index].Kind != tokenizer.SRPAREN {
+	if tokens[index].Kind != types.SRPAREN {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')' in line %d", tokens[index].Line))
 	}
 
@@ -159,7 +167,7 @@ func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 引数群
-func arguments(tokens []tokenizer.Token, index int) (int, error) {
+func arguments(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// 変数
@@ -170,7 +178,7 @@ func arguments(tokens []tokenizer.Token, index int) (int, error) {
 
 	for ;; {
 		// ","
-		if tokens[index].Kind != tokenizer.SCOMMA {
+		if tokens[index].Kind != types.SCOMMA {
 			break
 		}
 
@@ -187,7 +195,7 @@ func arguments(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 変数
-func variable(tokens []tokenizer.Token, index int) (int, error) {
+func variable(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// 変数名
@@ -197,7 +205,7 @@ func variable(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// "[]"
-	if tokens[index].Kind == tokenizer.SARRANGE {
+	if tokens[index].Kind == types.SARRANGE {
 		index++
 	}
 
@@ -205,11 +213,11 @@ func variable(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 関数記述部
-func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
+func functionDescription(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// "{"
-	if tokens[index].Kind != tokenizer.SLBRACE {
+	if tokens[index].Kind != types.SLBRACE {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{' in line %d", tokens[index].Line))
 	}
 
@@ -222,7 +230,7 @@ func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// "}"
-	if tokens[index].Kind != tokenizer.SRBRACE {
+	if tokens[index].Kind != types.SRBRACE {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}' in line %d", tokens[index].Line))
 	}
 
@@ -232,7 +240,7 @@ func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 記述部
-func description(tokens []tokenizer.Token, index int) (int, error) {
+func description(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// 記述ブロック
@@ -242,7 +250,7 @@ func description(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind != tokenizer.SDFCOMMAND && tokens[index].Kind != tokenizer.SIDENTIFIER {
+		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER {
 			break
 		}
 			
@@ -256,16 +264,16 @@ func description(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 記述ブロック
-func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
+func descriptionBlock(tokens []types.Token, index int) (int, error) {
 	var err error
 
-	if tokens[index].Kind == tokenizer.SDFCOMMAND {
+	if tokens[index].Kind == types.SDFCOMMAND {
 		// Dfile文
 		index, err = dockerFile(tokens, index)
 		if err != nil {
 			return index, err
 		}
-	} else if tokens[index].Kind == tokenizer.SIDENTIFIER {
+	} else if tokens[index].Kind == types.SIDENTIFIER {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
 		if err != nil {
@@ -279,16 +287,16 @@ func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Dfile文
-func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
+func dockerFile(tokens []types.Token, index int) (int, error) {
 	var err error
 	// Df命令
-	if tokens[index].Kind != tokenizer.SDFCOMMAND {
+	if tokens[index].Kind != types.SDFCOMMAND {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd in line %d", tokens[index].Line))
 	}
 
 	index++
 
-	// Df引数
+	// Df引数部
 	index, err = dfArgs(tokens, index)
 	if err != nil {
 		return index, err
@@ -298,7 +306,7 @@ func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Df引数部
-func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
+func dfArgs(tokens []types.Token, index int) (int, error) {
 	var err error
 	index, err = dfArg(tokens, index)
 	if err != nil {
@@ -306,8 +314,12 @@ func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		index, err = dfArg(tokens, index)
-		if err != nil {
+		if tokens[index].Kind == types.SDFARG || tokens[index].Kind == types.SASSIGNVARIABLE {
+			index, err = dfArg(tokens, index)
+			if err != nil {
+				return index, err
+			}
+		} else {
 			break
 		}
 	}
@@ -316,8 +328,8 @@ func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Df引数
-func dfArg(tokens []tokenizer.Token, index int) (int, error) {
-	if tokens[index].Kind != tokenizer.SDFARG && tokens[index].Kind != tokenizer.SASSIGNVARIABLE {
+func dfArg(tokens []types.Token, index int) (int, error) {
+	if tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SASSIGNVARIABLE {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find Df argument in line %d", tokens[index].Line))
 	}
 
@@ -327,7 +339,7 @@ func dfArg(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 関数呼び出し文
-func functionCall(tokens []tokenizer.Token, index int) (int, error) {
+func functionCall(tokens []types.Token, index int) (int, error) {
 	var err error
 
 	// 関数名
@@ -337,14 +349,14 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// "("
-	if tokens[index].Kind != tokenizer.SLPAREN {
+	if tokens[index].Kind != types.SLPAREN {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '(' in line %d", tokens[index].Line))
 	}
 
 	index++
 
 	// 文字列の並び
-	if tokens[index].Kind == tokenizer.SSTRING {
+	if tokens[index].Kind == types.SSTRING {
 		index, err = rowOfStrings(tokens, index)
 		if err != nil {
 			return index, err
@@ -352,7 +364,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	// ")"
-	if tokens[index].Kind != tokenizer.SRPAREN {
+	if tokens[index].Kind != types.SRPAREN {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')' in line %d", tokens[index].Line))
 	}
 
@@ -362,22 +374,22 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 文字列の並び
-func rowOfStrings(tokens []tokenizer.Token, index int) (int, error) {
+func rowOfStrings(tokens []types.Token, index int) (int, error) {
 	// 文字列
-	if tokens[index].Kind != tokenizer.SSTRING {
+	if tokens[index].Kind != types.SSTRING {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string in line %d", tokens[index].Line))
 	}
 
 	index++
 
 	for ;; {
-		if tokens[index].Kind != tokenizer.SCOMMA {
+		if tokens[index].Kind != types.SCOMMA {
 			break
 		}
 
 		index++
 
-		if tokens[index].Kind != tokenizer.SSTRING {
+		if tokens[index].Kind != types.SSTRING {
 			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string in line %d", tokens[index].Line))
 		}
 
@@ -388,8 +400,8 @@ func rowOfStrings(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 関数名
-func functionName(tokens []tokenizer.Token, index int) (int, error) {
-	if tokens[index].Kind != tokenizer.SIDENTIFIER {
+func functionName(tokens []types.Token, index int) (int, error) {
+	if tokens[index].Kind != types.SIDENTIFIER {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
 	}
 
@@ -399,8 +411,8 @@ func functionName(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 変数名
-func variableName(tokens []tokenizer.Token, index int) (int, error) {
-	if tokens[index].Kind != tokenizer.SIDENTIFIER {
+func variableName(tokens []types.Token, index int) (int, error) {
+	if tokens[index].Kind != types.SIDENTIFIER {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier in line %d", tokens[index].Line))
 	}
 

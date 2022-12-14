@@ -1,0 +1,3 @@
+installPackage(packageName) {
+    RUN apt-get ${packageName}
+}

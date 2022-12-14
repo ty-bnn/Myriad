@@ -1,35 +1,14 @@
 package tokenizer
 
-type TokenKind int
-
-const (
-	SIMPORT TokenKind = iota
-	SFROM
-	SMAIN
-	SLPAREN
-	SRPAREN
-	SCOMMA
-	SARRANGE
-	SLBRACE
-	SRBRACE
-	SSTRING
-	SDFCOMMAND
-	SDFARG
-	SIDENTIFIER
-	SASSIGNVARIABLE
+import (
+	"dcc/types"
 )
 
-type Token struct {
-	Content string
-	Kind TokenKind
-	Line int
-}
-
-func Tokenize(lines []string) ([]Token, error) {
-	var tokens []Token
+func Tokenize(lines []string) ([]types.Token, error) {
+	var tokens []types.Token
 
 	for line, lineStr := range lines {
-		var token Token
+		var token types.Token
 		var err error 
 		index := 0
 		for index < len(lineStr) {
@@ -57,20 +36,24 @@ func Tokenize(lines []string) ([]Token, error) {
 				*/
 				case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'R', 'S', 'U', 'V', 'W':
 					index, token, err = readDfCommands(index, lineStr, line)
+					tokens = append(tokens, token)
+
 					if err == nil {
 						for index < len(lineStr) {
-							tokens = append(tokens, token)
-							for index < len(lineStr) {
-								if lineStr[index] != ' ' {
-									break
-								}
-								index++
-							}
+							// for index < len(lineStr) {
+							// 	if lineStr[index] != ' ' {
+							// 		break
+							// 	}
+							// 	index++
+							// }
 							index, token, err = readDfArgs(index, lineStr, line)
 							if err != nil {
 								break
 							}
+
+							tokens = append(tokens, token)
 						}
+						token = types.Token{Content: "\n", Kind: types.SDFARG}
 					}
 				/*
 				Read strings start from " and ends at ".
