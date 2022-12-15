@@ -8,17 +8,17 @@ import(
 )
 
 func readReservedWords(index int, lineStr string, line int) (int, types.Token, error) {
-	if (lineStr[index : index + 6] == "import") {
+	if (index + 6 <= len(lineStr) && lineStr[index : index + 6] == "import") {
 		return index + 6, types.Token{Content: "import", Kind: types.SIMPORT, Line: line + 1}, nil 
-	} else if (lineStr[index : index + 4] == "from") {
+	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "from") {
 		return index + 4, types.Token{Content: "from", Kind: types.SFROM, Line: line + 1}, nil
-	} else if (lineStr[index : index + 4] == "main") {
+	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "main") {
 		return index + 4, types.Token{Content: "main", Kind: types.SMAIN, Line: line + 1}, nil
-	} else if (lineStr[index : index + 2] == "if") {
+	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "if") {
 		return index + 2, types.Token{Content: "if", Kind: types.SIF, Line: line + 1}, nil
-	} else if (lineStr[index : index + 7] == "else if") {
+	} else if (index + 7 <= len(lineStr) && lineStr[index : index + 7] == "else if") {
 		return index + 7, types.Token{Content: "else if", Kind: types.SELIF, Line: line + 1}, nil
-	} else if (lineStr[index : index + 4] == "else") {
+	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "else") {
 		return index + 4, types.Token{Content: "else", Kind: types.SELSE, Line: line + 1}, nil
 	}
 
@@ -32,15 +32,15 @@ func readSymbols(index int, lineStr string, line int) (int, types.Token, error) 
 		return index + 1, types.Token{Content: ")", Kind: types.SRPAREN, Line: line + 1}, nil
 	} else if (lineStr[index] == ',') {
 		return index + 1, types.Token{Content: ",", Kind: types.SCOMMA, Line: line + 1}, nil
-	} else if (lineStr[index : index + 1] == "[]") {
+	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "[]") {
 		return index + 2, types.Token{Content: "[]", Kind: types.SARRANGE, Line: line + 1}, nil
 	} else if (lineStr[index] == '{') {
 		return index + 1, types.Token{Content: "{", Kind: types.SLBRACE, Line: line + 1}, nil
 	} else if (lineStr[index] == '}') {
 		return index + 1, types.Token{Content: "}", Kind: types.SRBRACE, Line: line + 1}, nil
-	} else if (lineStr[index : index + 1] == "==") {
+	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "==") {
 		return index + 2, types.Token{Content: "==", Kind: types.SEQUAL, Line: line + 1}, nil
-	} else if (lineStr[index : index + 1] == "!=") {
+	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "!=") {
 		return index + 2, types.Token{Content: "!=", Kind: types.SNOTEQUAL, Line: line + 1}, nil
 	}
 

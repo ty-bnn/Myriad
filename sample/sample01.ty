@@ -1,13 +1,21 @@
 import installPackage from "./sample/sample02.ty"
 
 copyFileFromLocal(filePath) {
-    WORKDIR /app
-    COPY . ${filePath}
+    if (filePath == "./hello.go") {
+        WORKDIR /app
+        COPY . ./hello.go
+    } else if (filePath == "./good.go") {
+        WORKDIR /app
+        COPY . ./good.go
+    } else {
+        WORKDIR /app
+        COPY . ./else.go
+    }
 }
 
 main(arg) {
     FROM python:${arg}
     installPackage("httpd")
-    copyFileFromLocal("hello.go")
+    copyFileFromLocal("./hello.go")
     CMD ["python", "-m", "http.server", "--cgi"]
 }
