@@ -446,8 +446,8 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 	
 	index++
 
-	// 記述ブロック
-	index, err = descriptionBlock(tokens, index)
+	// 記述部
+	index, err = description(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -568,8 +568,8 @@ func elifSection(tokens []types.Token, index int) (int, error) {
 	
 	index++
 
-	// 記述ブロック
-	index, err = descriptionBlock(tokens, index)
+	// 記述部
+	index, err = description(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -604,8 +604,8 @@ func elseSection(tokens []types.Token, index int) (int, error) {
 	
 	index++
 
-	// 記述ブロック
-	index, err = descriptionBlock(tokens, index)
+	// 記述部
+	index, err = description(tokens, index)
 	if err != nil {
 		return index, err
 	}

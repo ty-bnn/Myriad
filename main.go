@@ -26,9 +26,9 @@ func main() {
 	}
 	
 	// For debug.
-	// for _, token := range tokens {
-	// 	fmt.Printf("%30s\t%10d\n", token.Content, token.Kind)
-	// }
+	for _, token := range tokens {
+		fmt.Printf("%30s\t%10d\n", token.Content, token.Kind)
+	}
 
 	err = parser.Parse(tokens)
 	if err != nil {
