@@ -272,9 +272,15 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
-	} else if index < len(tokens) && tokens[index].Kind == types.SIDENTIFIER {
+	} else if index + 1 < len(tokens) && tokens[index].Kind == types.SIDENTIFIER && tokens[index + 1].Kind == types.SLPAREN {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	} else if index + 1 < len(tokens) && tokens[index].Kind == types.SIDENTIFIER && tokens[index + 1].Kind == types.SASSIGN {
+		// 代入分
+		index, err = assignSentence(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -609,6 +615,46 @@ func elseSection(tokens []types.Token, index int) (int, error) {
 
 	index++
 	
+	return index, nil
+}
+
+// 代入文
+func assignSentence(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// 変数名
+	index, err = variableName(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "="
+	if index >= len(tokens) && tokens[index].Kind != types.SASSIGN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '='"))
+	}
+	
+	index++
+
+	// "["
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACKET {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '['"))
+	}
+	
+	index++
+
+	// 文字列の並び
+	index, err = rowOfStrings(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "]"
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ']'"))
+	}
+	
+	index++
+
 	return index, nil
 }
 
