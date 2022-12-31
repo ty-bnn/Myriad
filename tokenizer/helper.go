@@ -32,8 +32,6 @@ func readSymbols(index int, lineStr string, line int) (int, types.Token, error) 
 		return index + 1, types.Token{Content: ")", Kind: types.SRPAREN, Line: line + 1}, nil
 	} else if (lineStr[index] == ',') {
 		return index + 1, types.Token{Content: ",", Kind: types.SCOMMA, Line: line + 1}, nil
-	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "[]") {
-		return index + 2, types.Token{Content: "[]", Kind: types.SARRANGE, Line: line + 1}, nil
 	} else if (lineStr[index] == '{') {
 		return index + 1, types.Token{Content: "{", Kind: types.SLBRACE, Line: line + 1}, nil
 	} else if (lineStr[index] == '}') {
@@ -42,6 +40,12 @@ func readSymbols(index int, lineStr string, line int) (int, types.Token, error) 
 		return index + 2, types.Token{Content: "==", Kind: types.SEQUAL, Line: line + 1}, nil
 	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "!=") {
 		return index + 2, types.Token{Content: "!=", Kind: types.SNOTEQUAL, Line: line + 1}, nil
+	} else if (lineStr[index] == '=') {
+		return index + 1, types.Token{Content: "=", Kind: types.SASSIGN, Line: line + 1}, nil
+	} else if (lineStr[index] == '[') {
+		return index + 1, types.Token{Content: "[", Kind: types.SLBRACKET, Line: line + 1}, nil
+	} else if (lineStr[index] == ']') {
+		return index + 1, types.Token{Content: "]", Kind: types.SRBRACKET, Line: line + 1}, nil
 	}
 
 	return index, types.Token{}, errors.New(fmt.Sprintf("Symbols'index: %d find invalid token in \"%s\".", index, lineStr))

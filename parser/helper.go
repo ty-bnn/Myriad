@@ -208,11 +208,6 @@ func variable(tokens []types.Token, index int) (int, error) {
 		return index, err
 	}
 
-	// "[]"
-	if index < len(tokens) && tokens[index].Kind == types.SARRANGE {
-		index++
-	}
-
 	return index, nil
 }
 

@@ -212,12 +212,6 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 		return index, err
 	}
 
-	// "[]"
-	if tokens[index].Kind == types.SARRANGE {
-		argument.Kind = types.ARRAY
-		index++
-	}
-
 	if argumentExist(functionPointer, name) {
 		return index, errors.New(fmt.Sprintf("semantic error: %s is already defined in line %d", name, tokens[index].Line))
 	}

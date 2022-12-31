@@ -17,9 +17,9 @@ func Tokenize(lines []string) ([]types.Token, error) {
 					index++
 					continue
 				/*
-				Read symbols '(', ')', ',', "[]", '{', '}', "==", "!="
+				Read symbols '(', ')', ',', "[]", '{', '}', "==", "!=", '[', ']', '='
 				*/
-				case '(', ')', ',', '[', '{', '}', '=', '!':
+				case '(', ')', ',', '{', '}', '=', '!', '[', ']':
 					index, token, err = readSymbols(index, lineStr, line)
 				/*
 				Read reserved words ("import", "from", "main", "if", "else if", "else")

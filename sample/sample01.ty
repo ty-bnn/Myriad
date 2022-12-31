@@ -13,7 +13,9 @@ copyFileFromLocal(filePath) {
     }
 }
 
-main(arg) {
+main(args) {
+    packages = ["a", "b", "c"]
+    
     FROM python:${arg}
     installPackage("httpd")
     copyFileFromLocal("./hello.go")
