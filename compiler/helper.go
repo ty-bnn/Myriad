@@ -416,6 +416,7 @@ func rowOfStrings(tokens []types.Token, index int) ([]string, int, error) {
 
 func ifBlock(tokens []types.Token, index int) (int, error) {
 	var err error
+	var ifIndexes []int
 
 	// "if"
 	index++
@@ -429,8 +430,8 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 		return index, err
 	}
 
-	ifCode := &types.InterCode{Kind: types.IF, IfContent: ifContent}
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], *ifCode)
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.IF, IfContent: ifContent})
+	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]) - 1)
 
 	// ")"
 	index++
@@ -455,6 +456,7 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 		}
 
 		// elif節
+		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
 		index, err = elifSection(tokens, index)
 		if err != nil {
 			return index, err
@@ -468,7 +470,9 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 		}
 	}
 
-	(*ifCode).IfContent.EndIndex = len(functionInterCodeMap[functionPointer])
+	for _, index := range ifIndexes {
+		functionInterCodeMap[functionPointer][index].IfContent.EndIndex = len(functionInterCodeMap[functionPointer])
+	}
 
 	return index, nil
 }

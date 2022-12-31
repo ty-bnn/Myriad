@@ -13,7 +13,7 @@ func GenerateCode(fInterCodeMap map[string][]types.InterCode, fArgMap map[string
 	functionInterCodeMap = fInterCodeMap
 	functionArgMap = fArgMap
 
-	_, codes := generateCodeBlock(0, "main", os.Args)
+	_, codes := generateCodeBlock(0, "main", os.Args[2:])
 
 	return codes
 }

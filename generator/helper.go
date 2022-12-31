@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"fmt"
+	// "fmt"
 	"dcc/types"
 )
 
@@ -10,8 +10,6 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 	interCodes := functionInterCodeMap[functionName]
 	
 	for index < len(interCodes) {
-		// fmt.Println(functionName)
-		// fmt.Println(interCodes[index].Kind)
 		var code string
 		var codeBlock []string
 
@@ -31,10 +29,8 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 			index++
 		case types.IF:
 			index, codeBlock = generateIfBlock(index, functionName, argValues)
-			fmt.Println(index)
 			codes = append(codes, codeBlock...)
 		case types.ENDIF:
-			fmt.Println("hello")
 			index++
 			return index, codes
 		}
