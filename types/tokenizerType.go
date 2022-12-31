@@ -1,7 +1,6 @@
 package types
 
 type TokenKind int
-
 const (
 	SIMPORT TokenKind = iota
 	SFROM

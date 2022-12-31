@@ -1,14 +1,42 @@
 package types
 
-type CodeKind int
+// 中間言語
+type InterCode struct {
+	Content string
+	Kind CodeKind
+	ArgValues []string // for 関数呼び出し
+	IfContent IfContent // for if文
+}
 
+type CodeKind int
 const (
 	ROW CodeKind = iota
 	VAR
+	CALLFUNC
+	IF
+	ELIF
+	ELSE
+	ENDIF
+)
+
+type IfContent struct {
+	LFormula, RFormula Formula
+	Operator OperaterKind
+	EndIndex int
+}
+
+type Formula struct {
+	Content string
+	Kind TokenKind
+}
+
+type OperaterKind int
+const (
+	EQUAL OperaterKind = iota
+	NOTEQUAL
 )
 
 type ArgumentKind int
-
 const (
 	STRING ArgumentKind = iota
 	ARRAY
@@ -16,11 +44,5 @@ const (
 
 type Argument struct {
 	Name string
-	Value string
 	Kind ArgumentKind
-}
-
-type Code struct {
-	Code string
-	Kind CodeKind
 }

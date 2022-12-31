@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"bufio"
 	"errors"
-
-	"dcc/types"
 )
 
 func ReadLinesFromFile(samplePath string) ([]string, error) {
@@ -32,7 +30,7 @@ func ReadLinesFromFile(samplePath string) ([]string, error) {
 	return lines, nil
 }
 
-func WriteFile(contents []types.Code) (error) {
+func WriteFile(codes []string) error {
 	// Creae file.
 	fp, err := os.Create("Dockerfile")
 	if err != nil {
@@ -41,8 +39,8 @@ func WriteFile(contents []types.Code) (error) {
 	}
 	defer fp.Close()
 
-	for _, content := range contents {
-		_, err := fp.Write([]byte(content.Code))
+	for _, code := range codes {
+		_, err := fp.Write([]byte(code))
 		if err != nil {
 			return errors.New(fmt.Sprintf("cannot write byte data to the file"))
 		}
@@ -50,3 +48,4 @@ func WriteFile(contents []types.Code) (error) {
 
 	return nil
 }
+

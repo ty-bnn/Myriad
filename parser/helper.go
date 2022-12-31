@@ -457,7 +457,6 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-
 	index++
 
 	for ;; {
@@ -482,7 +481,7 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 	return index, nil
 }
 
-// 比較演算子
+// 条件判定式
 func conditionalFormula(tokens []types.Token, index int) (int, error) {
 	var err error
 	// 式
@@ -579,14 +578,12 @@ func elifSection(tokens []types.Token, index int) (int, error) {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-
 	index++
 	
 	return index, nil
 }
 
 // else節
-// elif節
 func elseSection(tokens []types.Token, index int) (int, error) {
 	var err error
 
@@ -614,7 +611,6 @@ func elseSection(tokens []types.Token, index int) (int, error) {
 	if index >= len(tokens) && tokens[index].Kind != types.SRBRACE {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
-
 
 	index++
 	
