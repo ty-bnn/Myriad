@@ -1,17 +1,21 @@
 package types
 
 type TokenKind int
-
 const (
 	SIMPORT TokenKind = iota
 	SFROM
 	SMAIN
+	SIF
+	SELIF
+	SELSE
 	SLPAREN
 	SRPAREN
 	SCOMMA
 	SARRANGE
 	SLBRACE
 	SRBRACE
+	SEQUAL
+	SNOTEQUAL
 	SSTRING
 	SDFCOMMAND
 	SDFARG

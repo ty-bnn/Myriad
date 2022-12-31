@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"os"
 	"errors"
 
 	"dcc/types"
@@ -88,7 +87,7 @@ func fileName(tokens []types.Token, index int) (int, error) {
 		return index, err
 	}
 
-	err = Compile(newTokens, functionArgMap, functionCodeMap)
+	err = program(newTokens, 0)
 	if err != nil {
 		return index, err
 	}
@@ -206,16 +205,7 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 
 	// 変数名
 	name := tokens[index].Content
-	var argument types.Argument
-	if functionPointer == "main" {
-		if argIndex < len(os.Args){
-			argument = types.Argument{Name: name, Value: os.Args[argIndex], Kind: types.STRING}
-		} else {
-			return index, errors.New(fmt.Sprintf("semantic error: not enough argument value in line %d", tokens[index].Line))
-		}
-	} else {
-		argument = types.Argument{Name: name, Value: "", Kind: types.STRING}
-	}
+	argument := types.Argument{Name: name, Kind: types.STRING}
 
 	index, err = variableName(tokens, index)
 	if err != nil {
@@ -232,7 +222,7 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 		return index, errors.New(fmt.Sprintf("semantic error: %s is already defined in line %d", name, tokens[index].Line))
 	}
 
-	(*functionArgMap)[functionPointer] = append((*functionArgMap)[functionPointer], argument)
+	functionArgMap[functionPointer] = append(functionArgMap[functionPointer], argument)
 
 	return index, nil
 }
@@ -296,6 +286,12 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
+	} else if tokens[index].Kind == types.SIF {
+		// ifブロック
+		index, err = ifBlock(tokens, index)
+		if err != nil {
+			return index, err
+		}
 	}
 
 	return index, nil
@@ -305,8 +301,8 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 func dockerFile(tokens []types.Token, index int) (int, error) {
 	var err error
 	// Df命令
-	(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], types.Code{Code: tokens[index].Content, Kind: types.ROW})
-	(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], types.Code{Code: " ", Kind: types.ROW})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: tokens[index].Content, Kind: types.ROW})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: " ", Kind: types.ROW})
 	index++
 
 	// Df引数
@@ -344,16 +340,14 @@ func dfArgs(tokens []types.Token, index int) (int, error) {
 func dfArg(tokens []types.Token, index int) (int, error) {
 	content := tokens[index].Content
 
-	var code types.Code
+	var code types.InterCode
 	if tokens[index].Kind == types.SDFARG {
-		code = types.Code{Code: content, Kind: types.ROW}
-	} else if tokens[index].Kind == types.SASSIGNVARIABLE && functionPointer == "main" {
-		code = types.Code{Code: getArgumentValue("main", content)}
-	} else {
-		code = types.Code{Code: content, Kind: types.VAR}
+		code = types.InterCode{Content: content, Kind: types.ROW}
+	} else if tokens[index].Kind == types.SASSIGNVARIABLE {
+		code = types.InterCode{Content: content, Kind: types.VAR}
 	}
 	
-	(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], code)
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], code)
 	index++
 
 	return index, nil
@@ -365,7 +359,7 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 	functionCallName := tokens[index].Content
 
 	// 関数名
-	if _, ok := (*functionCodeMap)[functionCallName]; !ok {
+	if _, ok := functionInterCodeMap[functionCallName]; !ok {
 		return index, errors.New(fmt.Sprintf("semantic error: function %s is not defined in line %d", tokens[index].Content, tokens[index].Line))
 	}
 
@@ -378,18 +372,12 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 	index++
 
 	// 文字列の並び
-	index, err = rowOfStrings(tokens, index)
+	argValues, index, err := rowOfStrings(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	for _, code := range (*functionCodeMap)[functionCallName] {
-		if code.Kind == types.ROW {
-			(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], code)
-		} else {
-			(*functionCodeMap)[functionPointer] = append((*functionCodeMap)[functionPointer], types.Code{Code: getArgumentValue(functionCallName, code.Code)})
-		}
-	}
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: functionCallName, Kind: types.CALLFUNC, ArgValues: argValues})
 
 	// ")"
 	index++
@@ -398,19 +386,21 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 }
 
 // 文字列の並び
-func rowOfStrings(tokens []types.Token, index int) (int, error) {
+func rowOfStrings(tokens []types.Token, index int) ([]string, int, error) {
+	var argValues []string
 	functionCallName := tokens[index - 2].Content
 
 	// 文字列
-	for i, _ := range (*functionArgMap)[functionCallName] {
+	for i, _ := range functionArgMap[functionCallName] {
 		if tokens[index].Kind != types.SSTRING {
-			return index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
+			return argValues, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
 		}
 
-		(*functionArgMap)[functionCallName][i].Value = tokens[index].Content
+		// functionArgMap[functionCallName][i].Value = tokens[index].Content
+		argValues = append(argValues, tokens[index].Content)
 		index++
 
-		if i == len((*functionArgMap)[functionCallName]) - 1 {
+		if i == len(functionArgMap[functionCallName]) - 1 {
 			break
 		}
 
@@ -418,9 +408,197 @@ func rowOfStrings(tokens []types.Token, index int) (int, error) {
 	}
 
 	if tokens[index].Kind == types.SCOMMA {
-		return index, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", tokens[index].Line))
+		return argValues, index, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", tokens[index].Line))
 	}
 
+	return argValues, index, nil
+}
+
+func ifBlock(tokens []types.Token, index int) (int, error) {
+	var err error
+	var ifIndexes []int
+
+	// "if"
+	index++
+
+	// "("
+	index++
+
+	// 条件判定式
+	ifContent, index, err := conditionalFormula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.IF, IfContent: ifContent})
+	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]) - 1)
+
+	// ")"
+	index++
+
+	// "{"
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+
+	// "}"
+	index++
+
+	for ;; {
+		if tokens[index].Kind != types.SELIF {
+			break
+		}
+
+		// elif節
+		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
+		index, err = elifSection(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	}
+
+	if tokens[index].Kind == types.SELSE {
+		index, err = elseSection(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	}
+
+	for _, index := range ifIndexes {
+		functionInterCodeMap[functionPointer][index].IfContent.EndIndex = len(functionInterCodeMap[functionPointer])
+	}
+
+	return index, nil
+}
+
+// 条件判定式
+func conditionalFormula(tokens []types.Token, index int) (types.IfContent, int, error) {
+	var ifContent types.IfContent
+	var err error
+	// 式
+	lFormula, index, err := formula(tokens, index)
+	if err != nil {
+		return ifContent, index, err
+	}
+
+	// 比較演算子
+	op, index, err := conditionalOperator(tokens, index)
+	if err != nil {
+		return ifContent, index, err
+	}
+
+	// 式
+	rFormula, index, err := formula(tokens, index)
+	if err != nil {
+		return ifContent, index, err
+	}
+
+	ifContent = types.IfContent{LFormula: lFormula, RFormula: rFormula, Operator: op}
+
+	return ifContent, index, nil
+}
+
+// 式
+func formula(tokens []types.Token, index int) (types.Formula, int, error) {
+	// 変数, 文字列
+	var formula types.Formula
+
+	if tokens[index].Kind == types.SIDENTIFIER {
+		if argumentExist(functionPointer, tokens[index].Content) {
+			formula = types.Formula{Content: tokens[index].Content, Kind: types.SIDENTIFIER}
+		} else {
+			return formula, index, errors.New(fmt.Sprintf("semantic error: function %s is not defined in line %d", tokens[index].Content, tokens[index].Line))
+		}
+	} else if tokens[index].Kind == types.SSTRING {
+		formula = types.Formula{Content: tokens[index].Content, Kind: types.SSTRING}
+	}
+
+	index++
+
+	return formula, index, nil
+}
+
+// 比較演算子
+func conditionalOperator(tokens []types.Token, index int) (types.OperaterKind, int, error) {
+	var op types.OperaterKind
+	if tokens[index].Kind == types.SEQUAL {
+		op = types.EQUAL
+	} else if tokens[index].Kind == types.SNOTEQUAL {
+		op = types.NOTEQUAL
+	}
+	// 比較演算子
+	index++
+
+	return op, index, nil
+}
+
+// elif節
+func elifSection(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "else if"
+	index++
+
+	// "("
+	index++
+
+	// 条件判定式
+	ifContent, index, err := conditionalFormula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ELIF, IfContent: ifContent})
+
+	// ")"
+	index++
+
+	// "{"
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+
+	// "}"
+	index++
+	
+	return index, nil
+}
+
+// else節
+func elseSection(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "else"
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ELSE})
+	
+	index++
+
+	// "{"
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+
+	// "}"
+	index++
+	
 	return index, nil
 }
 

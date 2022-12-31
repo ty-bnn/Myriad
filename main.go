@@ -3,13 +3,12 @@ package main
 import(
 	"fmt"
 	"os"
-	"errors"
 
-	"dcc/types"
 	"dcc/others"
 	"dcc/tokenizer"
 	"dcc/parser"
 	"dcc/compiler"
+	"dcc/generator"
 )
 
 func main() {
@@ -35,22 +34,24 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	functionCodeMap := map[string][]types.Code{}
-	functionArgMap := map[string][]types.Argument{}
-
-	err = compiler.Compile(tokens, &functionArgMap, &functionCodeMap)
+	
+	functionInterCodeMap, functionArgMap, err := compiler.Compile(tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if _, ok := functionCodeMap["main"]; !ok {
-		fmt.Println(errors.New(fmt.Sprintf("syntax error: cannot find main function")))
-		os.Exit(1)
-	}
+	// For debug
+	// for k, v := range functionInterCodeMap {
+	// 	fmt.Println(k)
+	// 	for _, c := range v {
+	// 		fmt.Println(c)
+	// 	}
+	// }
 
-	err = others.WriteFile(functionCodeMap["main"])
+	codes := generator.GenerateCode(functionInterCodeMap, functionArgMap)
+
+	err = others.WriteFile(codes)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

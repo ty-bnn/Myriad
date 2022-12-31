@@ -283,6 +283,12 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
+	} else if index < len(tokens) && tokens[index].Kind == types.SIF {
+		// ifブロック
+		index, err = ifBlock(tokens, index)
+		if err != nil {
+			return index, err
+		}
 	} else {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
 	}
@@ -400,6 +406,214 @@ func rowOfStrings(tokens []types.Token, index int) (int, error) {
 		index++
 	}
 
+	return index, nil
+}
+
+func ifBlock(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "if"
+	if index >= len(tokens) && tokens[index].Kind != types.SIF {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
+	}
+
+	index++
+
+	// "("
+	if index >= len(tokens) && tokens[index].Kind != types.SLPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+
+	index++
+
+	// 条件判定式
+	index, err = conditionalFormula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// ")"
+	if index >= len(tokens) && tokens[index].Kind != types.SRPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+
+	index++
+
+	// "{"
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+	
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "}"
+	if index >= len(tokens) && tokens[index].Kind != types.SRBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	index++
+
+	for ;; {
+		if index >= len(tokens) || tokens[index].Kind != types.SELIF {
+			break
+		}
+
+		// elif節
+		index, err = elifSection(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	}
+
+	if index < len(tokens) && tokens[index].Kind == types.SELSE {
+		index, err = elseSection(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	}
+
+	return index, nil
+}
+
+// 条件判定式
+func conditionalFormula(tokens []types.Token, index int) (int, error) {
+	var err error
+	// 式
+	index, err = formula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// 比較演算子
+	index, err = conditionalOperator(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// 式
+	index, err = formula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	return index, nil
+}
+
+// 式
+func formula(tokens []types.Token, index int) (int, error) {
+	// 変数, 文字列
+	if index >= len(tokens) || (tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SSTRING) {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find formula"))
+	}
+
+	index++
+
+	return index, nil
+}
+
+// 比較演算子
+func conditionalOperator(tokens []types.Token, index int) (int, error) {
+	// "==", "!="
+	if index >= len(tokens) || (tokens[index].Kind != types.SEQUAL && tokens[index].Kind != types.SNOTEQUAL) {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find conditional operator"))
+	}
+
+	index++
+
+	return index, nil
+}
+
+// elif節
+func elifSection(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "else if"
+	if index >= len(tokens) || tokens[index].Kind != types.SELIF {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
+	}
+
+	index++
+
+	// "("
+	if index >= len(tokens) && tokens[index].Kind != types.SLPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+
+	index++
+
+	// 条件判定式
+	index, err = conditionalFormula(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// ")"
+	if index >= len(tokens) && tokens[index].Kind != types.SRPAREN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+
+	index++
+
+	// "{"
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+	
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "}"
+	if index >= len(tokens) && tokens[index].Kind != types.SRBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	index++
+	
+	return index, nil
+}
+
+// else節
+func elseSection(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "else"
+	if index >= len(tokens) || tokens[index].Kind != types.SELSE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'else'"))
+	}
+
+	index++
+
+	// "{"
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+	
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "}"
+	if index >= len(tokens) && tokens[index].Kind != types.SRBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	index++
+	
 	return index, nil
 }
 

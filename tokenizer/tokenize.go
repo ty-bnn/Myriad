@@ -17,15 +17,15 @@ func Tokenize(lines []string) ([]types.Token, error) {
 					index++
 					continue
 				/*
-				Read symbols '(', ')', ',', "[]"", '{', '}'
+				Read symbols '(', ')', ',', "[]", '{', '}', "==", "!="
 				*/
-				case '(', ')', ',', '[', '{', '}':
+				case '(', ')', ',', '[', '{', '}', '=', '!':
 					index, token, err = readSymbols(index, lineStr, line)
 				/*
-				Read reserved words ("import", "from", "main")
+				Read reserved words ("import", "from", "main", "if", "else if", "else")
 				If not reserved words, read identifiers starts from 'i', 'f', 'm'.
 				*/
-				case 'i', 'f', 'm':
+				case 'e', 'f', 'i', 'm':
 					index, token, err = readReservedWords(index, lineStr, line)
 					if err != nil {
 						index, token, err = readIdentifier(index, lineStr, line)
