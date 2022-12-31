@@ -20,6 +20,10 @@ func readReservedWords(index int, lineStr string, line int) (int, types.Token, e
 		return index + 7, types.Token{Content: "else if", Kind: types.SELIF, Line: line + 1}, nil
 	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "else") {
 		return index + 4, types.Token{Content: "else", Kind: types.SELSE, Line: line + 1}, nil
+	} else if (index + 3 <= len(lineStr) && lineStr[index : index + 2] == "for") {
+		return index + 2, types.Token{Content: "for", Kind: types.SFOR, Line: line + 1}, nil
+	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "in") {
+		return index + 2, types.Token{Content: "in", Kind: types.SIN, Line: line + 1}, nil
 	}
 
 	return index, types.Token{}, errors.New(fmt.Sprintf("ReservedWords'index: %d find invalid token in \"%s\".", index, lineStr)) 

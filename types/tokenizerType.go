@@ -8,6 +8,8 @@ const (
 	SIF
 	SELIF
 	SELSE
+	SFOR
+	SIN
 	SLPAREN
 	SRPAREN
 	SCOMMA

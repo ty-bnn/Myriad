@@ -14,10 +14,11 @@ copyFileFromLocal(filePath) {
 }
 
 main(args) {
-    packages = ["a", "b", "c"]
-    
     FROM python:${arg}
-    installPackage("httpd")
+    packages = ["a", "b", "c"]
+    for package in packages {
+        installPacakge(package)
+    }
     copyFileFromLocal("./hello.go")
     CMD ["python", "-m", "http.server", "--cgi"]
 }
