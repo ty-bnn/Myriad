@@ -13,7 +13,7 @@ copyFileFromLocal(filePath) {
     }
 }
 
-main(args) {
+main (args) {
     FROM python:${arg}
     packages = ["a", "b", "c"]
     for package in packages {

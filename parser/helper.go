@@ -249,7 +249,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER) {
+		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SFOR) {
 			break
 		}
 			
@@ -278,15 +278,21 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
+	} else if index < len(tokens) && tokens[index].Kind == types.SIF {
+		// ifブロック
+		index, err = ifBlock(tokens, index)
+		if err != nil {
+			return index, err
+		}
 	} else if index + 1 < len(tokens) && tokens[index].Kind == types.SIDENTIFIER && tokens[index + 1].Kind == types.SASSIGN {
-		// 代入分
+		// 代入文
 		index, err = assignSentence(tokens, index)
 		if err != nil {
 			return index, err
 		}
-	} else if index < len(tokens) && tokens[index].Kind == types.SIF {
-		// ifブロック
-		index, err = ifBlock(tokens, index)
+	} else if index < len(tokens) && tokens[index].Kind == types.SFOR {
+		// for文
+		index, err = forSentence(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -366,9 +372,9 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 
 	index++
 
-	// 文字列の並び
-	if index < len(tokens) && tokens[index].Kind == types.SSTRING {
-		index, err = rowOfStrings(tokens, index)
+	// 式の並び
+	if index < len(tokens) && (tokens[index].Kind == types.SIDENTIFIER || tokens[index].Kind == types.SSTRING) {
+		index, err = rowOfFormula(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -376,6 +382,7 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 
 	// ")"
 	if index >= len(tokens) || tokens[index].Kind != types.SRPAREN {
+		fmt.Println(index)
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
@@ -384,11 +391,11 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 	return index, nil
 }
 
-// 文字列の並び
-func rowOfStrings(tokens []types.Token, index int) (int, error) {
-	// 文字列
-	if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
+// 式の並び
+func rowOfFormula(tokens []types.Token, index int) (int, error) {
+	// 式
+	if index >= len(tokens) || (tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SSTRING) {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
 	}
 
 	index++
@@ -400,8 +407,8 @@ func rowOfStrings(tokens []types.Token, index int) (int, error) {
 
 		index++
 
-		if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
-			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
+		if index >= len(tokens) || (tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SSTRING) {
+			return index, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
 		}
 
 		index++
@@ -655,6 +662,85 @@ func assignSentence(tokens []types.Token, index int) (int, error) {
 	
 	index++
 
+	return index, nil
+}
+
+// 文字列の並び
+func rowOfStrings(tokens []types.Token, index int) (int, error) {
+	// 文字列
+	if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
+	}
+
+	index++
+
+	for ;; {
+		if index >= len(tokens) || tokens[index].Kind != types.SCOMMA {
+			break
+		}
+
+		index++
+
+		if index >= len(tokens) || tokens[index].Kind != types.SSTRING {
+			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
+		}
+
+		index++
+	}
+
+	return index, nil
+}
+
+// for文
+func forSentence(tokens []types.Token, index int) (int, error) {
+	var err error
+
+	// "for"
+	if index >= len(tokens) && tokens[index].Kind != types.SFOR {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'for'"))
+	}
+	
+	index++
+
+	// 変数名
+	index, err = variableName(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "in"
+	if index >= len(tokens) && tokens[index].Kind != types.SIN {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'in'"))
+	}
+
+	index++
+
+	// 変数
+	index, err = variable(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "{"
+	if index >= len(tokens) && tokens[index].Kind != types.SLBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+	
+	index++
+
+	// 記述部
+	index, err = description(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// "}"
+	if index >= len(tokens) && tokens[index].Kind != types.SRBRACE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	index++
+	
 	return index, nil
 }
 

@@ -8,21 +8,21 @@ import(
 )
 
 func readReservedWords(index int, lineStr string, line int) (int, types.Token, error) {
-	if (index + 6 <= len(lineStr) && lineStr[index : index + 6] == "import") {
+	if (index + 7 <= len(lineStr) && lineStr[index : index + 7] == "import ") {
 		return index + 6, types.Token{Content: "import", Kind: types.SIMPORT, Line: line + 1}, nil 
-	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "from") {
+	} else if (index + 5 <= len(lineStr) && lineStr[index : index + 5] == "from ") {
 		return index + 4, types.Token{Content: "from", Kind: types.SFROM, Line: line + 1}, nil
-	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "main") {
+	} else if (index + 5 <= len(lineStr) && lineStr[index : index + 5] == "main ") {
 		return index + 4, types.Token{Content: "main", Kind: types.SMAIN, Line: line + 1}, nil
-	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "if") {
+	} else if (index + 3 <= len(lineStr) && lineStr[index : index + 3] == "if " ) {
 		return index + 2, types.Token{Content: "if", Kind: types.SIF, Line: line + 1}, nil
-	} else if (index + 7 <= len(lineStr) && lineStr[index : index + 7] == "else if") {
+	} else if (index + 8 <= len(lineStr) && lineStr[index : index + 8] == "else if ") {
 		return index + 7, types.Token{Content: "else if", Kind: types.SELIF, Line: line + 1}, nil
-	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "else") {
+	} else if (index + 5 <= len(lineStr) && lineStr[index : index + 5] == "else ") {
 		return index + 4, types.Token{Content: "else", Kind: types.SELSE, Line: line + 1}, nil
-	} else if (index + 3 <= len(lineStr) && lineStr[index : index + 2] == "for") {
-		return index + 2, types.Token{Content: "for", Kind: types.SFOR, Line: line + 1}, nil
-	} else if (index + 2 <= len(lineStr) && lineStr[index : index + 2] == "in") {
+	} else if (index + 4 <= len(lineStr) && lineStr[index : index + 4] == "for ") {
+		return index + 3, types.Token{Content: "for", Kind: types.SFOR, Line: line + 1}, nil
+	} else if (index + 3 <= len(lineStr) && lineStr[index : index + 3] == "in ") {
 		return index + 2, types.Token{Content: "in", Kind: types.SIN, Line: line + 1}, nil
 	}
 
