@@ -51,7 +51,7 @@ func main() {
 
 	codes := generator.GenerateCode(functionInterCodeMap, functionArgMap)
 
-	err = others.WriteFile(codes)
+	err = others.WriteFile(codes, os.Args[2])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
