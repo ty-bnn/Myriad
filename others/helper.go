@@ -30,9 +30,9 @@ func ReadLinesFromFile(samplePath string) ([]string, error) {
 	return lines, nil
 }
 
-func WriteFile(codes []string) error {
-	// Creae file.
-	fp, err := os.Create("Dockerfile")
+func WriteFile(codes []string, filePath string) error {
+	// Create file.
+	fp, err := os.Create(filePath)
 	if err != nil {
 		fp.Close()
 		return errors.New(fmt.Sprintf("cannot create Dockerfile"))
