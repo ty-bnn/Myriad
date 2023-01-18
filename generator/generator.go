@@ -23,8 +23,6 @@ func GenerateCode(fInterCodeMap map[string][]types.InterCode, fArgMap map[string
 
 	for i := 0; i < len(functionArgMap["main"]); i++ {
 		argsInMain[functionArgMap["main"][i].Name] = os.Args[i + 3]
-		fmt.Println(functionArgMap["main"][i].Name)
-		fmt.Println(os.Args[i+ 3])
 	}
 
 	_, codes, err := generateCodeBlock(0, "main", os.Args[3:])
