@@ -49,7 +49,11 @@ func main() {
 	// 	}
 	// }
 
-	codes := generator.GenerateCode(functionInterCodeMap, functionArgMap)
+	codes, err := generator.GenerateCode(functionInterCodeMap, functionArgMap)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	err = others.WriteFile(codes, os.Args[2])
 	if err != nil {

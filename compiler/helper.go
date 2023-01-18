@@ -225,10 +225,6 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 		index++
 	}
 
-	if argumentExist(functionPointer, name) {
-		return index, errors.New(fmt.Sprintf("semantic error: %s is already defined in line %d", name, tokens[index].Line))
-	}
-
 	functionArgMap[functionPointer] = append(functionArgMap[functionPointer], argument)
 
 	return index, nil
@@ -517,11 +513,7 @@ func formula(tokens []types.Token, index int) (types.Formula, int, error) {
 	var formula types.Formula
 
 	if tokens[index].Kind == types.SIDENTIFIER {
-		if argumentExist(functionPointer, tokens[index].Content) {
-			formula = types.Formula{Content: tokens[index].Content, Kind: types.SIDENTIFIER}
-		} else {
-			return formula, index, errors.New(fmt.Sprintf("semantic error: function %s is not defined in line %d", tokens[index].Content, tokens[index].Line))
-		}
+		formula = types.Formula{Content: tokens[index].Content, Kind: types.SIDENTIFIER}
 	} else if tokens[index].Kind == types.SSTRING {
 		formula = types.Formula{Content: tokens[index].Content, Kind: types.SSTRING}
 	}

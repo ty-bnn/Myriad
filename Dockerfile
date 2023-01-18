@@ -4,5 +4,5 @@ RUN aaaa aaaaa \
     bbbbb \
     a
 WORKDIR /app
-COPY . ./hello.go
+COPY . alpine
 CMD ["python", "-m", "http.server", "--cgi"]

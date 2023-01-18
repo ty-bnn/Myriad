@@ -2,12 +2,12 @@ import installPackage from "./sample/sample02.ty"
 import hello from "./sample/sample02.ty"
 
 copyFileFromLocal(filePath) {
-    if (filePath == "./hello.go") {
+    if (filePath == "./hlo.go") {
         WORKDIR /app
         COPY . ./hello.go
-    } else if (filePath == "./good.go") {
+    } else if (arg == "alpine") {
         WORKDIR /app
-        COPY . ./good.go
+        COPY . ${arg}
     } else {
         WORKDIR /app
         COPY . ./else.go
@@ -20,6 +20,6 @@ main(arg) {
     RUN aaaa aaaaa \
         bbbbb \
         a
-    copyFileFromLocal("./hello.go")
+    copyFileFromLocal("./good.go")
     CMD ["python", "-m", "http.server", "--cgi"]
 }
