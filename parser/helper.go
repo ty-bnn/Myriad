@@ -254,7 +254,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER) {
+		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF) {
 			break
 		}
 			
@@ -409,6 +409,7 @@ func rowOfStrings(tokens []types.Token, index int) (int, error) {
 	return index, nil
 }
 
+// ifブロック
 func ifBlock(tokens []types.Token, index int) (int, error) {
 	var err error
 

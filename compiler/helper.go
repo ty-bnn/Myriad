@@ -260,7 +260,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER {
+		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF {
 			break
 		}
 			
@@ -363,6 +363,9 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 
 	// 関数名
 	if _, ok := functionInterCodeMap[functionCallName]; !ok {
+		for name := range functionInterCodeMap {
+			fmt.Println(name)
+		}
 		return index, errors.New(fmt.Sprintf("semantic error: function %s is not defined in line %d", tokens[index].Content, tokens[index].Line))
 	}
 

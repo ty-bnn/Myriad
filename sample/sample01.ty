@@ -1,25 +1,9 @@
-import installPackage from "./sample/sample02.ty"
-import hello from "./sample/sample02.ty"
-
-copyFileFromLocal(filePath) {
-    if (filePath == "./hlo.go") {
-        WORKDIR /app
-        COPY . ./hello.go
-    } else if (arg == "alpine") {
-        WORKDIR /app
-        COPY . ${arg}
-    } else {
-        WORKDIR /app
-        COPY . ./else.go
-    }
-}
-
 main(arg) {
-    FROM python:${arg}
-    installPackage("httpd", "1.1.1")
-    RUN aaaa aaaaa \
-        bbbbb \
-        a
-    copyFileFromLocal("./good.go")
-    CMD ["python", "-m", "http.server", "--cgi"]
+    if (arg == "alpine") {
+        RUN a
+    }
+
+    if (arg == "alpine") {
+        ENV a
+    }
 }
