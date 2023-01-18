@@ -88,7 +88,7 @@ func readDfCommands(index int, lineStr string, line int) (int, types.Token, erro
 func readDfArgs(index int, lineStr string, line int) (int, types.Token, error) {
 	start := index
 
-	if lineStr[index : index + 2] == "${" {
+	if index + 2 < len(lineStr) && lineStr[index : index + 2] == "${" {
 		index += 2
 		for index < len(lineStr) {
 			if lineStr[index] == '}' {
@@ -114,6 +114,27 @@ func readDfArgs(index int, lineStr string, line int) (int, types.Token, error) {
 			return index, types.Token{Content: lineStr[start : index], Kind: types.SDFARG, Line: line + 1}, nil
 		}
 	}
+}
+
+func readDfArgsPerLine(index int, lineStr string, line int) (int, []types.Token, error) {
+	var tokens []types.Token
+	var token types.Token
+	var err error
+
+	for index < len(lineStr) {
+		for lineStr[index] == ' ' {
+			index++
+		}
+
+		index, token, err = readDfArgs(index, lineStr, line)
+		if err != nil {
+			return index, tokens, err
+		}
+
+		tokens = append(tokens, token)
+	}
+
+	return index, tokens, nil
 }
 
 func readString(index int, lineStr string, line int) (int, types.Token, error) {

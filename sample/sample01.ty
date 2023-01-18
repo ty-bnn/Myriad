@@ -1,4 +1,5 @@
-import installPackage from "./sample/image/sample02.ty"
+import installPackage from "./sample/sample02.ty"
+import hello from "./sample/sample02.ty"
 
 copyFileFromLocal(filePath) {
     if (filePath == "./hello.go") {
@@ -16,6 +17,9 @@ copyFileFromLocal(filePath) {
 main(arg) {
     FROM python:${arg}
     installPackage("httpd", "1.1.1")
+    RUN aaaa aaaaa \
+        bbbbb \
+        a
     copyFileFromLocal("./hello.go")
     CMD ["python", "-m", "http.server", "--cgi"]
 }
