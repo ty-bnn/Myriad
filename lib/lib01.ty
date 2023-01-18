@@ -1,0 +1,11 @@
+fromCopytEntryPoint(copyFrom, copyTo, entryPoint) {
+    FROM scratch
+    COPY --from=builder ${copytFrom} ${copyTo}
+    ENTRYPOINT ["${entryPoint}"]
+}
+
+gitCloneAndMoveToDir(dir, repoUrl, dirAfterClone) {
+    RUN 
+    RUN git clone ${repoUrl}
+    RUN 
+}
