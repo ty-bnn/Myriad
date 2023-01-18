@@ -72,6 +72,13 @@ func importFunc(tokens []types.Token, index int) (int, error) {
 // ファイル名
 func fileName(tokens []types.Token, index int) (int, error) {
 	filePath := tokens[index].Content
+
+	if isCompiled(filePath) {
+		return index + 1, nil
+	}
+
+	readFiles = append(readFiles, filePath)
+
 	lines, err := others.ReadLinesFromFile(filePath)
 	if err != nil {
 		return index, err

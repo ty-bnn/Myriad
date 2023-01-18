@@ -9,3 +9,13 @@ func argumentExist(functionName string, variableName string) bool {
 
 	return false
 }
+
+func isCompiled(file string) bool {
+	for _, compiledFile := range readFiles {
+		if file == compiledFile {
+			return true
+		}
+	}
+
+	return false
+}
