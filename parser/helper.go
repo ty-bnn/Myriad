@@ -254,7 +254,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF) {
+		if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF) {
 			break
 		}
 			
@@ -271,7 +271,7 @@ func description(tokens []types.Token, index int) (int, error) {
 func descriptionBlock(tokens []types.Token, index int) (int, error) {
 	var err error
 
-	if index < len(tokens) && tokens[index].Kind == types.SDFCOMMAND {
+	if index < len(tokens) && tokens[index].Kind == types.SDFCOMMAND || tokens[index].Kind == types.SDFARG {
 		// Dfile文
 		index, err = dockerFile(tokens, index)
 		if err != nil {
@@ -300,11 +300,14 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 func dockerFile(tokens []types.Token, index int) (int, error) {
 	var err error
 	// Df命令
-	if index >= len(tokens) || tokens[index].Kind != types.SDFCOMMAND {
+	if index >= len(tokens) || (tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SDFARG) {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
 	}
 
-	index++
+	if tokens[index].Kind == types.SDFCOMMAND {
+		index++
+	}
+
 
 	// Df引数部
 	index, err = dfArgs(tokens, index)

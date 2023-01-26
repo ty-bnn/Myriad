@@ -89,6 +89,11 @@ func fileName(tokens []types.Token, index int) (int, error) {
 		return index, err
 	}
 
+	// For debug.
+	// for _, token := range newTokens {
+	// 	fmt.Printf("%30s\t%10d\n", token.Content, token.Kind)
+	// }
+
 	err = parser.Parse(newTokens)
 	if err != nil {
 		return index, err
@@ -260,7 +265,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF {
+		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF {
 			break
 		}
 			
@@ -277,7 +282,7 @@ func description(tokens []types.Token, index int) (int, error) {
 func descriptionBlock(tokens []types.Token, index int) (int, error) {
 	var err error
 
-	if tokens[index].Kind == types.SDFCOMMAND {
+	if tokens[index].Kind == types.SDFCOMMAND || tokens[index].Kind == types.SDFARG {
 		// Dfile文
 		index, err = dockerFile(tokens, index)
 		if err != nil {
@@ -303,10 +308,12 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 // Dfile文
 func dockerFile(tokens []types.Token, index int) (int, error) {
 	var err error
-	// Df命令
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: tokens[index].Content, Kind: types.ROW})
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: " ", Kind: types.ROW})
-	index++
+	if tokens[index].Kind == types.SDFCOMMAND {
+		// Df命令
+		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: tokens[index].Content, Kind: types.ROW})
+		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: " ", Kind: types.ROW})
+		index++
+	}
 
 	// Df引数
 	index, err = dfArgs(tokens, index)

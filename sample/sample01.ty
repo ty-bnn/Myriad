@@ -1,9 +1,0 @@
-main(arg) {
-    if (arg == "alpine") {
-        RUN a
-    }
-
-    if (arg == "alpine") {
-        ENV a
-    }
-}

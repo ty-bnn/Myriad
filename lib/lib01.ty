@@ -5,7 +5,40 @@ fromCopytEntryPoint(copyFrom, copyTo, entryPoint) {
 }
 
 gitCloneAndMoveToDir(dir, repoUrl, dirAfterClone) {
-    RUN 
-    RUN git clone ${repoUrl}
-    RUN 
+    RUN set -eux \
+        && cd ${dir} \
+        && git clone ${repoUrl} \
+        && cd ${dirAfterClone}
+}
+
+aptGetInstall(packageA, packageB) {
+    RUN set -eux \
+        && apt-get update \
+        && apt-get install -y --no-install-recommends ${packageA} ${packageB} \
+        && apt-get -y clean \
+        && rm -rf /var/lib/apt/lists/*
+}
+
+yumInstall(packageA, packageB) {
+    RUN set -eux \
+        && yum install -y ${packageA} ${packageB} \
+        && rm -rf /var/cache/yum
+}
+
+apkInstall(packageA, packageB) {
+    RUN set -eux \
+        && apk add --update-cache ${packageA} ${packageB}
+}
+
+makeWithWget(dir, url, package) {
+    RUN set -eux \
+        && mkdir -p ${dir}
+        && cd ${dir} \
+        && wget ${url} \
+        && tar xvf ${package}.tar.gz \
+        && cd ${dir}/${package} \
+        && ./configure \
+        && make \
+        && make install \
+        rm -rf ${dir}/${package}
 }

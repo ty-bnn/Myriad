@@ -1,8 +1,0 @@
-installPackage(packageName, packageVersion) {
-    RUN apt-get ${packageName} ${packageVersion}
-}
-
-hello() {
-    RUN aaa \
-        bbb
-}

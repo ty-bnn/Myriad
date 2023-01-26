@@ -1,11 +1,22 @@
 package tokenizer
 
 import (
+	"regexp"
+
 	"dcc/types"
 )
 
 func Tokenize(lines []string) ([]types.Token, error) {
 	var tokens []types.Token
+	reFunctionCall := regexp.MustCompile(`.*\((".*", )*(".*")?\)$`)
+	reFunctionCallBeginLine := regexp.MustCompile(`.*\((".*", )*(".*",)?$`)
+	reFunctionCallCenterLine := regexp.MustCompile(`\s*(".*", )*(".*",)$`)
+	reFunctionCallEndLine := regexp.MustCompile(`\s*(".*", )*(".*")\)$`)
+	reFunctionDeclareStart := regexp.MustCompile(`.*\(.*\) {$`) // ifも含まれる
+	reFunctionDeclareEnd := regexp.MustCompile(`\s*}$`) // ifも含まれる
+	reElIf := regexp.MustCompile(`\s*} else if (.*) {$`)
+	reElse := regexp.MustCompile(`\s*} else {$`)
+	reImport := regexp.MustCompile(`import.*from.*".*"`)
 
 	for i := 0; i < len(lines); i++ {
 		var token types.Token
@@ -20,7 +31,19 @@ func Tokenize(lines []string) ([]types.Token, error) {
 				Read symbols '(', ')', ',', "[]", '{', '}', "==", "!="
 				*/
 				case '(', ')', ',', '[', '{', '}', '=', '!':
-					index, token, err = readSymbols(index, lines[i], i)
+					if reFunctionCall.MatchString(lines[i]) || reFunctionDeclareStart.MatchString(lines[i]) ||
+						reFunctionDeclareEnd.MatchString(lines[i]) || reElIf.MatchString(lines[i]) ||
+						reElse.MatchString(lines[i]) || reImport.MatchString(lines[i]) ||
+						reFunctionCallBeginLine.MatchString(lines[i]) || reFunctionCallCenterLine.MatchString(lines[i]) ||
+						reFunctionCallEndLine.MatchString(lines[i]) {
+						index, token, err = readSymbols(index, lines[i], i)
+					} else {
+						var dfArgTokens []types.Token
+						index, dfArgTokens, err = readDfArgsPerLine(index, lines[i], i)
+						tokens = append(tokens, types.Token{Content: "    ", Kind: types.SDFARG})
+						tokens = append(tokens, dfArgTokens...)
+						token = types.Token{Content: "\n", Kind: types.SDFARG}
+					}
 				/*
 				Read reserved words ("import", "from", "main", "if", "else if", "else")
 				If not reserved words, read identifiers starts from 'i', 'f', 'm'.
@@ -28,13 +51,25 @@ func Tokenize(lines []string) ([]types.Token, error) {
 				case 'e', 'f', 'i', 'm':
 					index, token, err = readReservedWords(index, lines[i], i)
 					if err != nil {
-						index, token, err = readIdentifier(index, lines[i], i)
-					}				
+						if reFunctionCall.MatchString(lines[i]) || reFunctionDeclareStart.MatchString(lines[i]) ||
+							reFunctionDeclareEnd.MatchString(lines[i]) || reElIf.MatchString(lines[i]) ||
+							reElse.MatchString(lines[i]) || reImport.MatchString(lines[i]) ||
+							reFunctionCallBeginLine.MatchString(lines[i]) || reFunctionCallCenterLine.MatchString(lines[i]) ||
+							reFunctionCallEndLine.MatchString(lines[i]) {
+							index, token, err = readIdentifier(index, lines[i], i)
+						} else {
+							var dfArgTokens []types.Token
+							index, dfArgTokens, err = readDfArgsPerLine(index, lines[i], i)
+							tokens = append(tokens, types.Token{Content: "    ", Kind: types.SDFARG})
+							tokens = append(tokens, dfArgTokens...)
+							token = types.Token{Content: "\n", Kind: types.SDFARG}
+						}
+					}
 				/*
 				Read Dfile commands.
 				And Read Dfile arguments.
 				*/
-				case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'S', 'U', 'V', 'W':
+				case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'S', 'U', 'V', 'W', 'R':
 					index, token, err = readDfCommands(index, lines[i], i)
 					tokens = append(tokens, token)
 
@@ -43,30 +78,6 @@ func Tokenize(lines []string) ([]types.Token, error) {
 						index, dfArgTokens, err = readDfArgsPerLine(index, lines[i], i)
 						tokens = append(tokens, dfArgTokens...)
 						token = types.Token{Content: "\n", Kind: types.SDFARG}
-					}
-				case 'R':
-					index, token, err = readDfCommands(index, lines[i], i)
-					tokens = append(tokens, token)
-
-					if err == nil {
-						start := i
-						for ;; {
-							if i != start {
-								tokens = append(tokens, types.Token{Content: "    ", Kind: types.SDFARG})
-							}
-							var dfArgTokens []types.Token
-							index, dfArgTokens, err = readDfArgsPerLine(index, lines[i], i)
-							tokens = append(tokens, dfArgTokens...)
-							token = types.Token{Content: "\n", Kind: types.SDFARG}
-
-							if err != nil || lines[i][len(lines[i])-1] != '\\' {
-								break
-							}
-
-							tokens = append(tokens, token)
-							i++
-							index = 0
-						}
 					}
 				/*
 				Read strings start from " and ends at ".
@@ -77,7 +88,19 @@ func Tokenize(lines []string) ([]types.Token, error) {
 				Read identifiers.
 				*/
 				default:
-					index, token, err = readIdentifier(index, lines[i], i)
+					if reFunctionCall.MatchString(lines[i]) || reFunctionDeclareStart.MatchString(lines[i]) ||
+						reFunctionDeclareEnd.MatchString(lines[i]) || reElIf.MatchString(lines[i]) ||
+						reElse.MatchString(lines[i]) || reImport.MatchString(lines[i]) ||
+						reFunctionCallBeginLine.MatchString(lines[i]) || reFunctionCallCenterLine.MatchString(lines[i]) ||
+						reFunctionCallEndLine.MatchString(lines[i]) {
+						index, token, err = readIdentifier(index, lines[i], i)
+					} else {
+						var dfArgTokens []types.Token
+						index, dfArgTokens, err = readDfArgsPerLine(index, lines[i], i)
+						tokens = append(tokens, types.Token{Content: "    ", Kind: types.SDFARG})
+						tokens = append(tokens, dfArgTokens...)
+						token = types.Token{Content: "\n", Kind: types.SDFARG}
+					}
 			}
 
 			if err != nil {
