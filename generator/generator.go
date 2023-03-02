@@ -5,14 +5,14 @@ import (
 	"os"
 	"errors"
 
-	"dcc/types"
+	"dcc/compiler"
 )
 
-var functionInterCodeMap map[string][]types.InterCode
-var functionArgMap map[string][]types.Argument
+var functionInterCodeMap map[string][]compiler.InterCode
+var functionArgMap map[string][]compiler.Argument
 var argsInMain map[string]string
 
-func GenerateCode(fInterCodeMap map[string][]types.InterCode, fArgMap map[string][]types.Argument) ([]string, error) {
+func GenerateCode(fInterCodeMap map[string][]compiler.InterCode, fArgMap map[string][]compiler.Argument) ([]string, error) {
 	functionInterCodeMap = fInterCodeMap
 	functionArgMap = fArgMap
 	argsInMain = map[string]string{}

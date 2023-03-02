@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"errors"
 
-	"dcc/types"
 	"dcc/tokenizer"
 	"dcc/parser"
 	"dcc/others"
@@ -217,7 +216,7 @@ func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 
 	// 変数名
 	name := tokens[index].Content
-	argument := types.Argument{Name: name, Kind: types.STRING}
+	argument := Argument{Name: name, Kind: STRING}
 
 	index, err = variableName(tokens, index)
 	if err != nil {
@@ -226,7 +225,7 @@ func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 
 	// "[]"
 	if tokens[index].Kind == tokenizer.SARRANGE {
-		argument.Kind = types.ARRAY
+		argument.Kind = ARRAY
 		index++
 	}
 
@@ -310,8 +309,8 @@ func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	if tokens[index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: tokens[index].Content, Kind: types.ROW})
-		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: " ", Kind: types.ROW})
+		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: tokens[index].Content, Kind: ROW})
+		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: " ", Kind: ROW})
 		index++
 	}
 
@@ -350,11 +349,11 @@ func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 func dfArg(tokens []tokenizer.Token, index int) (int, error) {
 	content := tokens[index].Content
 
-	var code types.InterCode
+	var code InterCode
 	if tokens[index].Kind == tokenizer.SDFARG {
-		code = types.InterCode{Content: content, Kind: types.ROW}
+		code = InterCode{Content: content, Kind: ROW}
 	} else if tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
-		code = types.InterCode{Content: content, Kind: types.VAR}
+		code = InterCode{Content: content, Kind: VAR}
 	}
 	
 	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], code)
@@ -390,7 +389,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: functionCallName, Kind: types.CALLFUNC, ArgValues: argValues})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: functionCallName, Kind: CALLFUNC, ArgValues: argValues})
 
 	// ")"
 	index++
@@ -443,7 +442,7 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.IF, IfContent: ifContent})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: IF, IfContent: ifContent})
 	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]) - 1)
 
 	// ")"
@@ -458,7 +457,7 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++
@@ -491,8 +490,8 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 条件判定式
-func conditionalFormula(tokens []tokenizer.Token, index int) (types.IfContent, int, error) {
-	var ifContent types.IfContent
+func conditionalFormula(tokens []tokenizer.Token, index int) (IfContent, int, error) {
+	var ifContent IfContent
 	var err error
 	// 式
 	lFormula, index, err := formula(tokens, index)
@@ -512,20 +511,20 @@ func conditionalFormula(tokens []tokenizer.Token, index int) (types.IfContent, i
 		return ifContent, index, err
 	}
 
-	ifContent = types.IfContent{LFormula: lFormula, RFormula: rFormula, Operator: op}
+	ifContent = IfContent{LFormula: lFormula, RFormula: rFormula, Operator: op}
 
 	return ifContent, index, nil
 }
 
 // 式
-func formula(tokens []tokenizer.Token, index int) (types.Formula, int, error) {
+func formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
 	// 変数, 文字列
-	var formula types.Formula
+	var formula Formula
 
 	if tokens[index].Kind == tokenizer.SIDENTIFIER {
-		formula = types.Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
+		formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
 	} else if tokens[index].Kind == tokenizer.SSTRING {
-		formula = types.Formula{Content: tokens[index].Content, Kind: tokenizer.SSTRING}
+		formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SSTRING}
 	}
 
 	index++
@@ -534,12 +533,12 @@ func formula(tokens []tokenizer.Token, index int) (types.Formula, int, error) {
 }
 
 // 比較演算子
-func conditionalOperator(tokens []tokenizer.Token, index int) (types.OperaterKind, int, error) {
-	var op types.OperaterKind
+func conditionalOperator(tokens []tokenizer.Token, index int) (OperaterKind, int, error) {
+	var op OperaterKind
 	if tokens[index].Kind == tokenizer.SEQUAL {
-		op = types.EQUAL
+		op = EQUAL
 	} else if tokens[index].Kind == tokenizer.SNOTEQUAL {
-		op = types.NOTEQUAL
+		op = NOTEQUAL
 	}
 	// 比較演算子
 	index++
@@ -563,7 +562,7 @@ func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ELIF, IfContent: ifContent})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ELIF, IfContent: ifContent})
 
 	// ")"
 	index++
@@ -577,7 +576,7 @@ func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++
@@ -590,7 +589,7 @@ func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "else"
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ELSE})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ELSE})
 	
 	index++
 
@@ -603,7 +602,7 @@ func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Kind: types.ENDIF})
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"errors"
 
-	"dcc/types"
+	"dcc/compiler"
 )
 
 func generateCodeBlock(index int, functionName string, argValues []string) (int, []string, error) {
@@ -17,11 +17,11 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 		var codeBlock []string
 
 		switch interCodes[index].Kind {
-		case types.ROW:
+		case compiler.ROW:
 			code = interCodes[index].Content
 			codes = append(codes, code)
 			index++
-		case types.VAR:
+		case compiler.VAR:
 			if i, ok := getArgumentIndex(functionName, interCodes[index].Content); ok {
 				code = argValues[i]
 			} else if val, ok := argsInMain[interCodes[index].Content]; ok {
@@ -32,7 +32,7 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 
 			codes = append(codes, code)
 			index++
-		case types.CALLFUNC:
+		case compiler.CALLFUNC:
 			_, codeBlock, err = generateCodeBlock(0, interCodes[index].Content, interCodes[index].ArgValues)
 			if err != nil {
 				return index, codes, err
@@ -40,14 +40,14 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 
 			codes = append(codes, codeBlock...)
 			index++
-		case types.IF:
+		case compiler.IF:
 			index, codeBlock, err = generateIfBlock(index, functionName, argValues)
 			if err != nil {
 				return index, codes, err
 			}
 
 			codes = append(codes, codeBlock...)
-		case types.ENDIF:
+		case compiler.ENDIF:
 			index++
 			return index, codes, nil
 		}
@@ -63,7 +63,7 @@ func generateIfBlock(index int, functionName string, argValues []string) (int, [
 	interCodes := functionInterCodeMap[functionName]
 
 	for index < len(interCodes) {
-		if interCodes[index].Kind == types.IF || interCodes[index].Kind == types.ELIF {
+		if interCodes[index].Kind == compiler.IF || interCodes[index].Kind == compiler.ELIF {
 			isTrue, err := getIfCondition(interCodes[index].IfContent, functionName, argValues)
 			if err != nil {
 				return index, codes, err
@@ -77,7 +77,7 @@ func generateIfBlock(index int, functionName string, argValues []string) (int, [
 
 				return interCodes[index].IfContent.EndIndex, codes, nil
 			}
-		} else if interCodes[index].Kind == types.ELSE {
+		} else if interCodes[index].Kind == compiler.ELSE {
 			index++
 			index, codes, err = generateCodeBlock(index, functionName, argValues)
 			if err != nil {

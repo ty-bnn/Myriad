@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"dcc/tokenizer"
-	"dcc/types"
+	"dcc/compiler"
 )
 
 func getArgumentIndex(functionName string, variableName string) (int, bool) {
@@ -18,7 +18,7 @@ func getArgumentIndex(functionName string, variableName string) (int, bool) {
 	return 0, false
 }
 
-func getIfCondition(ifContent types.IfContent, functionName string, argValues []string) (bool, error) {
+func getIfCondition(ifContent compiler.IfContent, functionName string, argValues []string) (bool, error) {
 	var lValue, rValue string
 	if ifContent.LFormula.Kind == tokenizer.SSTRING {
 		lValue = ifContent.LFormula.Content
@@ -44,9 +44,9 @@ func getIfCondition(ifContent types.IfContent, functionName string, argValues []
 		}
 	}
 
-	if ifContent.Operator == types.EQUAL && lValue == rValue {
+	if ifContent.Operator == compiler.EQUAL && lValue == rValue {
 		return true, nil
-	} else if ifContent.Operator == types.NOTEQUAL && lValue != rValue {
+	} else if ifContent.Operator == compiler.NOTEQUAL && lValue != rValue {
 		return true, nil
 	}
 

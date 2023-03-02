@@ -2,17 +2,16 @@ package compiler
 
 import (
 	"dcc/tokenizer"
-	"dcc/types"
 )
 
-var functionInterCodeMap map[string][]types.InterCode
-var functionArgMap map[string][]types.Argument
+var functionInterCodeMap map[string][]InterCode
+var functionArgMap map[string][]Argument
 var functionPointer string
 var readFiles []string
 
-func Compile(tokens []tokenizer.Token) (map[string][]types.InterCode, map[string][]types.Argument, error) {
-	functionInterCodeMap = map[string][]types.InterCode{}
-	functionArgMap = map[string][]types.Argument{}
+func Compile(tokens []tokenizer.Token) (map[string][]InterCode, map[string][]Argument, error) {
+	functionInterCodeMap = map[string][]InterCode{}
+	functionArgMap = map[string][]Argument{}
 	
 	err := program(tokens, 0)
 	if err != nil {
