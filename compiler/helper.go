@@ -10,10 +10,10 @@ import (
 	"dcc/others"
 )
 
-func program(tokens []types.Token, index int) error {
+func program(tokens []tokenizer.Token, index int) error {
 	var err error
 	// { 関数インポート文 }
-	for tokens[index].Kind == types.SIMPORT {
+	for tokens[index].Kind == tokenizer.SIMPORT {
 		index, err = importFunc(tokens, index)
 		if err != nil {
 			return err
@@ -22,7 +22,7 @@ func program(tokens []types.Token, index int) error {
 
 	// { 関数 }
 	for index < len(tokens) {
-		if tokens[index].Kind != types.SIDENTIFIER {
+		if tokens[index].Kind != tokenizer.SIDENTIFIER {
 			break
 		}
 
@@ -32,7 +32,7 @@ func program(tokens []types.Token, index int) error {
 		}
 	}
 
-	if index >= len(tokens) || tokens[index].Kind != types.SMAIN {
+	if index >= len(tokens) || tokens[index].Kind != tokenizer.SMAIN {
 		return nil
 	}
 
@@ -46,7 +46,7 @@ func program(tokens []types.Token, index int) error {
 }
 
 // 関数インポート文
-func importFunc(tokens []types.Token, index int) (int, error) {
+func importFunc(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	// "import"
 	index++
@@ -70,7 +70,7 @@ func importFunc(tokens []types.Token, index int) (int, error) {
 }
 
 // ファイル名
-func fileName(tokens []types.Token, index int) (int, error) {
+func fileName(tokens []tokenizer.Token, index int) (int, error) {
 	filePath := tokens[index].Content
 
 	if isCompiled(filePath) {
@@ -110,7 +110,7 @@ func fileName(tokens []types.Token, index int) (int, error) {
 }
 
 // 関数
-func function(tokens []types.Token, index int) (int, error) {
+func function(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// 関数名
@@ -137,7 +137,7 @@ func function(tokens []types.Token, index int) (int, error) {
 }
 
 // メイン部
-func mainFunction(tokens []types.Token, index int) (int, error) {
+func mainFunction(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	functionPointer = "main"
@@ -161,14 +161,14 @@ func mainFunction(tokens []types.Token, index int) (int, error) {
 }
 
 // 引数宣言部
-func argumentDecralation(tokens []types.Token, index int) (int, error) {
+func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "("
 	index++
 
 	// 引数群
-	if 	tokens[index].Kind == types.SIDENTIFIER {
+	if 	tokens[index].Kind == tokenizer.SIDENTIFIER {
 		index, err = arguments(tokens, index)
 		if err != nil {
 			return index, err
@@ -182,7 +182,7 @@ func argumentDecralation(tokens []types.Token, index int) (int, error) {
 }
 
 // 引数群
-func arguments(tokens []types.Token, index int) (int, error) {
+func arguments(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	argIndex := 2
 
@@ -195,7 +195,7 @@ func arguments(tokens []types.Token, index int) (int, error) {
 	for ;; {
 		argIndex++
 		// ","
-		if tokens[index].Kind != types.SCOMMA {
+		if tokens[index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
@@ -212,7 +212,7 @@ func arguments(tokens []types.Token, index int) (int, error) {
 }
 
 // 変数
-func variable(tokens []types.Token, index int, argIndex int) (int, error) {
+func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 	var err error
 
 	// 変数名
@@ -225,7 +225,7 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 	}
 
 	// "[]"
-	if tokens[index].Kind == types.SARRANGE {
+	if tokens[index].Kind == tokenizer.SARRANGE {
 		argument.Kind = types.ARRAY
 		index++
 	}
@@ -236,7 +236,7 @@ func variable(tokens []types.Token, index int, argIndex int) (int, error) {
 }
 
 // 関数記述部
-func functionDescription(tokens []types.Token, index int) (int, error) {
+func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "{"
@@ -255,7 +255,7 @@ func functionDescription(tokens []types.Token, index int) (int, error) {
 }
 
 // 記述部
-func description(tokens []types.Token, index int) (int, error) {
+func description(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// 記述ブロック
@@ -265,7 +265,7 @@ func description(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind != types.SDFCOMMAND && tokens[index].Kind != types.SDFARG && tokens[index].Kind != types.SIDENTIFIER && tokens[index].Kind != types.SIF {
+		if tokens[index].Kind != tokenizer.SDFCOMMAND && tokens[index].Kind != tokenizer.SDFARG && tokens[index].Kind != tokenizer.SIDENTIFIER && tokens[index].Kind != tokenizer.SIF {
 			break
 		}
 			
@@ -279,22 +279,22 @@ func description(tokens []types.Token, index int) (int, error) {
 }
 
 // 記述ブロック
-func descriptionBlock(tokens []types.Token, index int) (int, error) {
+func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
-	if tokens[index].Kind == types.SDFCOMMAND || tokens[index].Kind == types.SDFARG {
+	if tokens[index].Kind == tokenizer.SDFCOMMAND || tokens[index].Kind == tokenizer.SDFARG {
 		// Dfile文
 		index, err = dockerFile(tokens, index)
 		if err != nil {
 			return index, err
 		}
-	} else if tokens[index].Kind == types.SIDENTIFIER {
+	} else if tokens[index].Kind == tokenizer.SIDENTIFIER {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
 		if err != nil {
 			return index, err
 		}
-	} else if tokens[index].Kind == types.SIF {
+	} else if tokens[index].Kind == tokenizer.SIF {
 		// ifブロック
 		index, err = ifBlock(tokens, index)
 		if err != nil {
@@ -306,9 +306,9 @@ func descriptionBlock(tokens []types.Token, index int) (int, error) {
 }
 
 // Dfile文
-func dockerFile(tokens []types.Token, index int) (int, error) {
+func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
-	if tokens[index].Kind == types.SDFCOMMAND {
+	if tokens[index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
 		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: tokens[index].Content, Kind: types.ROW})
 		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], types.InterCode{Content: " ", Kind: types.ROW})
@@ -325,7 +325,7 @@ func dockerFile(tokens []types.Token, index int) (int, error) {
 }
 
 // Df引数部
-func dfArgs(tokens []types.Token, index int) (int, error) {
+func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	index, err = dfArg(tokens, index)
 	if err != nil {
@@ -333,7 +333,7 @@ func dfArgs(tokens []types.Token, index int) (int, error) {
 	}
 
 	for ;; {
-		if tokens[index].Kind == types.SDFARG || tokens[index].Kind == types.SASSIGNVARIABLE {
+		if tokens[index].Kind == tokenizer.SDFARG || tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
 			index, err = dfArg(tokens, index)
 			if err != nil {
 				return index, err
@@ -347,13 +347,13 @@ func dfArgs(tokens []types.Token, index int) (int, error) {
 }
 
 // Df引数
-func dfArg(tokens []types.Token, index int) (int, error) {
+func dfArg(tokens []tokenizer.Token, index int) (int, error) {
 	content := tokens[index].Content
 
 	var code types.InterCode
-	if tokens[index].Kind == types.SDFARG {
+	if tokens[index].Kind == tokenizer.SDFARG {
 		code = types.InterCode{Content: content, Kind: types.ROW}
-	} else if tokens[index].Kind == types.SASSIGNVARIABLE {
+	} else if tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
 		code = types.InterCode{Content: content, Kind: types.VAR}
 	}
 	
@@ -364,7 +364,7 @@ func dfArg(tokens []types.Token, index int) (int, error) {
 }
 
 // 関数呼び出し文
-func functionCall(tokens []types.Token, index int) (int, error) {
+func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	functionCallName := tokens[index].Content
 
@@ -399,13 +399,13 @@ func functionCall(tokens []types.Token, index int) (int, error) {
 }
 
 // 文字列の並び
-func rowOfStrings(tokens []types.Token, index int) ([]string, int, error) {
+func rowOfStrings(tokens []tokenizer.Token, index int) ([]string, int, error) {
 	var argValues []string
 	functionCallName := tokens[index - 2].Content
 
 	// 文字列
 	for i, _ := range functionArgMap[functionCallName] {
-		if tokens[index].Kind != types.SSTRING {
+		if tokens[index].Kind != tokenizer.SSTRING {
 			return argValues, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
 		}
 
@@ -420,14 +420,14 @@ func rowOfStrings(tokens []types.Token, index int) ([]string, int, error) {
 		index++
 	}
 
-	if tokens[index].Kind == types.SCOMMA {
+	if tokens[index].Kind == tokenizer.SCOMMA {
 		return argValues, index, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", tokens[index].Line))
 	}
 
 	return argValues, index, nil
 }
 
-func ifBlock(tokens []types.Token, index int) (int, error) {
+func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	var ifIndexes []int
 
@@ -464,7 +464,7 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 	index++
 
 	for ;; {
-		if tokens[index].Kind != types.SELIF {
+		if tokens[index].Kind != tokenizer.SELIF {
 			break
 		}
 
@@ -476,7 +476,7 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 		}
 	}
 
-	if tokens[index].Kind == types.SELSE {
+	if tokens[index].Kind == tokenizer.SELSE {
 		index, err = elseSection(tokens, index)
 		if err != nil {
 			return index, err
@@ -491,7 +491,7 @@ func ifBlock(tokens []types.Token, index int) (int, error) {
 }
 
 // 条件判定式
-func conditionalFormula(tokens []types.Token, index int) (types.IfContent, int, error) {
+func conditionalFormula(tokens []tokenizer.Token, index int) (types.IfContent, int, error) {
 	var ifContent types.IfContent
 	var err error
 	// 式
@@ -518,14 +518,14 @@ func conditionalFormula(tokens []types.Token, index int) (types.IfContent, int, 
 }
 
 // 式
-func formula(tokens []types.Token, index int) (types.Formula, int, error) {
+func formula(tokens []tokenizer.Token, index int) (types.Formula, int, error) {
 	// 変数, 文字列
 	var formula types.Formula
 
-	if tokens[index].Kind == types.SIDENTIFIER {
-		formula = types.Formula{Content: tokens[index].Content, Kind: types.SIDENTIFIER}
-	} else if tokens[index].Kind == types.SSTRING {
-		formula = types.Formula{Content: tokens[index].Content, Kind: types.SSTRING}
+	if tokens[index].Kind == tokenizer.SIDENTIFIER {
+		formula = types.Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
+	} else if tokens[index].Kind == tokenizer.SSTRING {
+		formula = types.Formula{Content: tokens[index].Content, Kind: tokenizer.SSTRING}
 	}
 
 	index++
@@ -534,11 +534,11 @@ func formula(tokens []types.Token, index int) (types.Formula, int, error) {
 }
 
 // 比較演算子
-func conditionalOperator(tokens []types.Token, index int) (types.OperaterKind, int, error) {
+func conditionalOperator(tokens []tokenizer.Token, index int) (types.OperaterKind, int, error) {
 	var op types.OperaterKind
-	if tokens[index].Kind == types.SEQUAL {
+	if tokens[index].Kind == tokenizer.SEQUAL {
 		op = types.EQUAL
-	} else if tokens[index].Kind == types.SNOTEQUAL {
+	} else if tokens[index].Kind == tokenizer.SNOTEQUAL {
 		op = types.NOTEQUAL
 	}
 	// 比較演算子
@@ -548,7 +548,7 @@ func conditionalOperator(tokens []types.Token, index int) (types.OperaterKind, i
 }
 
 // elif節
-func elifSection(tokens []types.Token, index int) (int, error) {
+func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "else if"
@@ -586,7 +586,7 @@ func elifSection(tokens []types.Token, index int) (int, error) {
 }
 
 // else節
-func elseSection(tokens []types.Token, index int) (int, error) {
+func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "else"
@@ -612,7 +612,7 @@ func elseSection(tokens []types.Token, index int) (int, error) {
 }
 
 // 関数名
-func functionName(tokens []types.Token, index int) (int, error) {
+func functionName(tokens []tokenizer.Token, index int) (int, error) {
 	// 名前
 	index++
 
@@ -620,7 +620,7 @@ func functionName(tokens []types.Token, index int) (int, error) {
 }
 
 // 変数名
-func variableName(tokens []types.Token, index int) (int, error) {
+func variableName(tokens []tokenizer.Token, index int) (int, error) {
 	// 名前
 	index++
 

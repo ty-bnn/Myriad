@@ -1,5 +1,9 @@
 package types
 
+import (
+	"dcc/tokenizer"
+)
+
 // 中間言語
 type InterCode struct {
 	Content string
@@ -27,7 +31,7 @@ type IfContent struct {
 
 type Formula struct {
 	Content string
-	Kind TokenKind
+	Kind tokenizer.TokenKind
 }
 
 type OperaterKind int

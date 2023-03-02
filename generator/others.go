@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 
+	"dcc/tokenizer"
 	"dcc/types"
 )
 
@@ -19,9 +20,9 @@ func getArgumentIndex(functionName string, variableName string) (int, bool) {
 
 func getIfCondition(ifContent types.IfContent, functionName string, argValues []string) (bool, error) {
 	var lValue, rValue string
-	if ifContent.LFormula.Kind == types.SSTRING {
+	if ifContent.LFormula.Kind == tokenizer.SSTRING {
 		lValue = ifContent.LFormula.Content
-	} else if ifContent.LFormula.Kind == types.SIDENTIFIER {
+	} else if ifContent.LFormula.Kind == tokenizer.SIDENTIFIER {
 		if i, ok := getArgumentIndex(functionName, ifContent.LFormula.Content); ok {
 			lValue = argValues[i]
 		} else if val, ok := argsInMain[ifContent.LFormula.Content]; ok {
@@ -31,9 +32,9 @@ func getIfCondition(ifContent types.IfContent, functionName string, argValues []
 		}
 	}
 
-	if ifContent.RFormula.Kind == types.SSTRING {
+	if ifContent.RFormula.Kind == tokenizer.SSTRING {
 		rValue = ifContent.RFormula.Content
-	} else if ifContent.RFormula.Kind == types.SIDENTIFIER {
+	} else if ifContent.RFormula.Kind == tokenizer.SIDENTIFIER {
 		if i, ok := getArgumentIndex(functionName, ifContent.LFormula.Content); ok {
 			rValue = argValues[i]
 		} else if val, ok := argsInMain[ifContent.LFormula.Content]; ok {

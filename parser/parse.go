@@ -1,10 +1,10 @@
 package parser
 
 import (
-	"dcc/types"
+	"dcc/tokenizer"
 )
 
-func Parse(tokens []types.Token) (error) {
+func Parse(tokens []tokenizer.Token) (error) {
 	err := program(tokens, 0)
 	if err != nil {
 		return err
