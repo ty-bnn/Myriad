@@ -1,8 +1,8 @@
 main(version)
 {
-    FROM ${version}
+    FROM {{version}}
     RUN good \
-        ${version} \
+        {{version}} \
         morning
     CMD [hfsdf]
 }

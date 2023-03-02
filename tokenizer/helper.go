@@ -94,10 +94,10 @@ func readDfCommands(index int, line string, row int) (int, Token, error) {
 func readDfArg(index int, line string, row int) (int, Token, error) {
 	start := index
 
-	if index + 2 < len(line) && line[index : index + 2] == "${" {
+	if index + 2 < len(line) && line[index : index + 2] == "{{" {
 		index += 2
-		for index < len(line) {
-			if line[index] == '}' {
+		for index < len(line) - 1 {
+			if line[index : index + 2] == "}}" {
 				break
 			}
 			index++
@@ -109,7 +109,7 @@ func readDfArg(index int, line string, row int) (int, Token, error) {
 		}
 	} else {
 		for index < len(line) - 1 {
-			if line[index : index + 2] == "${" {
+			if line[index : index + 2] == "{{" {
 				break
 			}
 			index++
