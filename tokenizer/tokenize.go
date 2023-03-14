@@ -56,9 +56,9 @@ func Tokenize(lines []string) ([]Token, error) {
 						i, newToken, err = readString(i, line, row)
 
 					/*
-					Read symbols '(', ')', ',', "[]", '{', '}', "==", "!=".
+					Read symbols '(', ')', ',', "[]", '{', '}', "==", "!=", ":=".
 					*/
-					case '(', ')', ',', '[', '{', '}', '=', '!':
+					case '(', ')', ',', '[', '{', '}', '=', '!', ':':
 						i, newToken, err = readSymbols(i, line, row)
 					
 					/*

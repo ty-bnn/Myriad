@@ -18,6 +18,7 @@ const (
 	SARRANGE
 	SLBRACE
 	SRBRACE
+	SASSIGN
 	SEQUAL
 	SNOTEQUAL
 	SSTRING
@@ -47,6 +48,7 @@ func printTokens(tokens []Token) {
 		SARRANGE: "[]",
 		SLBRACE: "{",
 		SRBRACE: "}",
+		SASSIGN: ":=",
 		SEQUAL: "=",
 		SNOTEQUAL: "!=",
 		SSTRING: "string",
