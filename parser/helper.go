@@ -277,12 +277,15 @@ func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
-	} else if index < len(tokens) && tokens[index].Kind == tokenizer.SIDENTIFIER {
+	} else if index + 1 < len(tokens) && tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
 		if err != nil {
 			return index, err
 		}
+	} else if index + 1 < len(tokens) && tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SDEFINE {
+		// 変数定義文
+		index, err = defineVariable(tokens, index)
 	} else if index < len(tokens) && tokens[index].Kind == tokenizer.SIF {
 		// ifブロック
 		index, err = ifBlock(tokens, index)
@@ -526,6 +529,33 @@ func conditionalOperator(tokens []tokenizer.Token, index int) (int, error) {
 	// "==", "!="
 	if index >= len(tokens) || (tokens[index].Kind != tokenizer.SEQUAL && tokens[index].Kind != tokenizer.SNOTEQUAL) {
 		return index, errors.New(fmt.Sprintf("syntax error: cannot find conditional operator"))
+	}
+
+	index++
+
+	return index, nil
+}
+
+// 変数定義文
+func defineVariable(tokens []tokenizer.Token, index int) (int, error) {
+	var err error
+
+	// 変数名
+	index, err = variableName(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// ":="
+	if index >= len(tokens) || tokens[index].Kind != tokenizer.SDEFINE {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find ':='"))
+	}
+
+	index++
+
+	// 文字列
+	if index >= len(tokens) || tokens[index].Kind != tokenizer.SSTRING {
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find string"))
 	}
 
 	index++

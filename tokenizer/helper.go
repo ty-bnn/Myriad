@@ -50,7 +50,7 @@ func readSymbols(index int, line string, row int) (int, Token, error) {
 	} else if (index + 2 <= len(line) && line[index : index + 2] == "!=") {
 		return index + 2, Token{Content: "!=", Kind: SNOTEQUAL, Line: row + 1}, nil
 	} else if (index + 2 <= len(line) && line[index : index + 2] == ":=") {
-		return index + 2, Token{Content: ":=", Kind: SASSIGN, Line: row + 1}, nil
+		return index + 2, Token{Content: ":=", Kind: SDEFINE, Line: row + 1}, nil
 	}
 
 	return index, Token{}, errors.New(fmt.Sprintf("Symbols'index: %d find invalid character in \"%s\".", index, line))
