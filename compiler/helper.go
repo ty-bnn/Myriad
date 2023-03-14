@@ -309,8 +309,7 @@ func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	if tokens[index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: tokens[index].Content, Kind: ROW})
-		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: " ", Kind: ROW})
+		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: tokens[index].Content, Kind: COMMAND})
 		index++
 	}
 

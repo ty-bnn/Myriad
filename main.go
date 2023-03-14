@@ -6,9 +6,9 @@ import(
 
 	"dcc/others"
 	"dcc/tokenizer"
-	// "dcc/parser"
-	// "dcc/compiler"
-	// "dcc/generator"
+	"dcc/parser"
+	"dcc/compiler"
+	"dcc/generator"
 )
 
 func main() {
@@ -20,44 +20,44 @@ func main() {
 	}
 
 	// トークナイズ
-	_, err = tokenizer.Tokenize(lines)
+	tokens, err := tokenizer.Tokenize(lines)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// // パース
-	// err = parser.Parse(tokens)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	// パース
+	err = parser.Parse(tokens)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	
-	// // コンパイル
-	// functionInterCodeMap, functionArgMap, err := compiler.Compile(tokens)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
+	// コンパイル
+	functionInterCodeMap, functionArgMap, err := compiler.Compile(tokens)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// For debug
+	// for k, v := range functionInterCodeMap {
+	// 	fmt.Println(k)
+	// 	for _, c := range v {
+	// 		fmt.Println(c)
+	// 	}
 	// }
 
-	// // For debug
-	// // for k, v := range functionInterCodeMap {
-	// // 	fmt.Println(k)
-	// // 	for _, c := range v {
-	// // 		fmt.Println(c)
-	// // 	}
-	// // }
+	// コード生成
+	codes, err := generator.GenerateCode(functionInterCodeMap, functionArgMap)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	// // コード生成
-	// codes, err := generator.GenerateCode(functionInterCodeMap, functionArgMap)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-
-	// err = others.WriteFile(codes, os.Args[2])
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	err = others.WriteFile(codes, os.Args[2])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

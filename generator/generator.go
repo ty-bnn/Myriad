@@ -11,11 +11,13 @@ import (
 var functionInterCodeMap map[string][]compiler.InterCode
 var functionArgMap map[string][]compiler.Argument
 var argsInMain map[string]string
+var command string
 
 func GenerateCode(fInterCodeMap map[string][]compiler.InterCode, fArgMap map[string][]compiler.Argument) ([]string, error) {
 	functionInterCodeMap = fInterCodeMap
 	functionArgMap = fArgMap
 	argsInMain = map[string]string{}
+	command = ""
 
 	if len(functionArgMap["main"]) != len(os.Args[3:]) {
 		return []string{}, errors.New(fmt.Sprintf("system error: length of main argument is not match"))

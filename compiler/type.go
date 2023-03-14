@@ -15,6 +15,7 @@ type InterCode struct {
 type CodeKind int
 const (
 	ROW CodeKind = iota
+	COMMAND
 	VAR
 	CALLFUNC
 	IF

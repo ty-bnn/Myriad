@@ -1,6 +1,11 @@
+abc() {
+    RUN aaa
+}
+
 main(version)
 {
     FROM {{version}}
+    abc()
     RUN good \
         {{version}} \
         morning

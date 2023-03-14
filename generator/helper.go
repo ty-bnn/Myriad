@@ -21,6 +21,18 @@ func generateCodeBlock(index int, functionName string, argValues []string) (int,
 			code = interCodes[index].Content
 			codes = append(codes, code)
 			index++
+		case compiler.COMMAND:
+			if command == "RUN" && interCodes[index].Content == "RUN" {
+				// RUN命令の結合
+				codes[len(codes) - 1] = codes[len(codes) - 1][:len(codes[len(codes) - 1]) - 1] + " \\\n"
+				code = "    "
+				index++
+			} else {
+				code = interCodes[index].Content
+				command = interCodes[index].Content
+			}
+			codes = append(codes, code)
+			index++
 		case compiler.VAR:
 			if i, ok := getArgumentIndex(functionName, interCodes[index].Content); ok {
 				code = argValues[i]

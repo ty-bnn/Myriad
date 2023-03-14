@@ -9,6 +9,7 @@ func Tokenize(lines []string) ([]Token, error) {
 
 	var tokens []Token
 	var err error
+	var command string
 
 	isInCommand := false
 
@@ -31,10 +32,12 @@ func Tokenize(lines []string) ([]Token, error) {
 					*/
 					case 'A', 'C', 'E', 'F', 'H', 'L', 'M', 'O', 'R', 'S', 'U', 'V', 'W':
 						i, newToken, err = readDfCommands(i, line, row)
-						if err != nil {
+						if err == nil {
+							command = newToken.Content
+							isInCommand = true
+						} else {
 							i, newToken, err = readIdentifier(i, line, row)
 						}
-						isInCommand = true
 
 					/*
 					Read reserved words ("import", "from", "main", "if", "else if", "else")
@@ -68,8 +71,24 @@ func Tokenize(lines []string) ([]Token, error) {
 			} else {
 				// Dockerfileの引数
 				var newTokens []Token
+				var space string
+
 				i, newTokens, err = readDfArgs(i, line, row)
+
+				if (0 <= len(tokens) - 1 && tokens[len(tokens) - 1].Kind == SDFCOMMAND) {
+					// 既登録のトークン列の末尾がDfコマンドの場合，スペースを一つ空ける
+					space = " "	
+				} else {
+					// 既登録のトークン列の末尾がDfコマンドではない場合，スペースをDfコマンド長+1分空ける
+					for j := 0; j <= len(command); j++ {
+						space = space + " "
+					}
+				}
+				tokens = append(tokens, Token{Content: space, Kind: SDFARG})
+
 				tokens = append(tokens, newTokens...)
+				tokens = append(tokens, Token{Content: "\n", Kind: SDFARG})
+				
 
 				if line[len(line) - 1] != '\\' {
 					isInCommand = false

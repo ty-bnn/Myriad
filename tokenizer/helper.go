@@ -29,7 +29,7 @@ func readReservedWords(index int, line string, row int) (int, Token, error) {
 		return index + 4, Token{Content: "else", Kind: SELSE, Line: row + 1}, nil
 	}
 
-	return index, Token{}, errors.New(fmt.Sprintf("Tokenize error: found invalid character in line %d", row)) 
+	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row)) 
 }
 
 func readSymbols(index int, line string, row int) (int, Token, error) {
@@ -88,7 +88,7 @@ func readDfCommands(index int, line string, row int) (int, Token, error) {
 		return index + 11, Token{Content: line[index : index + 10], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
-	return index, Token{}, errors.New(fmt.Sprintf("Tokenize error: found invalid character in line %d", row))
+	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row))
 }
 
 func readDfArg(index int, line string, row int) (int, Token, error) {
@@ -103,7 +103,7 @@ func readDfArg(index int, line string, row int) (int, Token, error) {
 			index++
 		}
 		if index != len(line) {
-			return index + 1, Token{Content: line[start + 2: index], Kind: SASSIGNVARIABLE, Line: row + 1}, nil
+			return index + 2, Token{Content: line[start + 2: index], Kind: SASSIGNVARIABLE, Line: row + 1}, nil
 		} else {
 			return index, Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
 		}
@@ -127,10 +127,11 @@ func readDfArgs(index int, line string, row int) (int, []Token, error) {
 	var token Token
 	var err error
 
+	for line[index] == ' ' {
+		index++
+	}
+	
 	for index < len(line) {
-		for line[index] == ' ' {
-			index++
-		}
 
 		index, token, err = readDfArg(index, line, row)
 		if err != nil {
@@ -151,7 +152,7 @@ func readString(index int, line string, row int) (int, Token, error) {
 			return index + 1, Token{Content: line[start+1 : index], Kind: SSTRING, Line: row + 1}, nil
 		}
 	}
-	return index, Token{}, errors.New(fmt.Sprintf("Tokenize error: found invalid token in line %d", row))
+	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid token in line %d", row))
 }
 
 func readIdentifier(index int, line string, row int) (int, Token, error) {
@@ -164,5 +165,5 @@ func readIdentifier(index int, line string, row int) (int, Token, error) {
 			}
 		}
 	}
-	return index, Token{}, errors.New(fmt.Sprintf("Tokenize error: found invalid token in line %d", row))
+	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid token in line %d", row))
 }
