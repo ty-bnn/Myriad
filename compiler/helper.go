@@ -31,7 +31,7 @@ func program(tokens []tokenizer.Token, index int) error {
 			return err
 		}
 	}
-
+	
 	if index >= len(tokens) || tokens[index].Kind != tokenizer.SMAIN {
 		return nil
 	}
@@ -396,8 +396,8 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	// "("
 	index++
 
-	// 文字列の並び
-	argValues, index, err := rowOfStrings(tokens, index)
+	// 式の並び
+	formulas, index, err := rowOfFormulas(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -407,8 +407,10 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 		var newCode InterCode
 		if code.Kind == VAR {
 			argIndex, isExist := getArgumentIndex(functionCallName, code.Content)
-			if isExist {
-				newCode = InterCode{Content: argValues[argIndex], Kind: ROW}
+			if isExist && formulas[argIndex].Kind == tokenizer.SSTRING {
+				newCode = InterCode{Content: formulas[argIndex].Content, Kind: ROW}
+			} else if isExist && formulas[argIndex].Kind == tokenizer.SIDENTIFIER {
+				newCode = InterCode{Content: formulas[argIndex].Content, Kind: VAR}
 			} else {
 				return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 2", code.Content))
 			}
@@ -418,7 +420,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 			if code.IfContent.LFormula.Kind == tokenizer.SIDENTIFIER {
 				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.LFormula.Content)
 				if isExist {
-					newCode.IfContent.LFormula = Formula{Content: argValues[argIndex], Kind: tokenizer.SSTRING}
+					newCode.IfContent.LFormula = formulas[argIndex]
 				} else {
 					return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 3", code.IfContent.LFormula.Content))
 				}
@@ -427,7 +429,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 			if code.IfContent.RFormula.Kind == tokenizer.SIDENTIFIER {
 				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.RFormula.Content)
 				if isExist {
-					newCode.IfContent.RFormula = Formula{Content: argValues[argIndex], Kind: tokenizer.SSTRING}
+					newCode.IfContent.RFormula = formulas[argIndex]
 				} else {
 					return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 4", code.IfContent.RFormula.Content))
 				}
@@ -447,9 +449,11 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	return index, nil
 }
 
-// 文字列の並び
-func rowOfStrings(tokens []tokenizer.Token, index int) ([]string, int, error) {
-	var argValues []string
+// 式の並び
+func rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) {
+	var err error
+	var fml Formula
+	var formulas []Formula
 	functionCallName := tokens[index - 2].Content
 
 	var argNum int
@@ -462,16 +466,20 @@ func rowOfStrings(tokens []tokenizer.Token, index int) ([]string, int, error) {
 		argNum++
 	}
 
-	// 文字列
 	for i := 0; i < argNum; i++ {
-		if tokens[index].Kind != tokenizer.SSTRING {
-			return argValues, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
+		// 式
+		if tokens[index].Kind != tokenizer.SSTRING && tokens[index].Kind != tokenizer.SIDENTIFIER {
+			return formulas, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
 		}
 
-		argValues = append(argValues, tokens[index].Content)
-		index++
+		fml, index, err = formula(tokens, index)
+		if err != nil {
+			return formulas, index, err
+		}
 
-		if len(argValues) == argNum {
+		formulas = append(formulas, fml)
+
+		if len(formulas) == argNum {
 			break
 		}
 
@@ -480,10 +488,10 @@ func rowOfStrings(tokens []tokenizer.Token, index int) ([]string, int, error) {
 	}
 
 	if tokens[index].Kind == tokenizer.SCOMMA {
-		return argValues, index, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", tokens[index].Line))
+		return formulas, index, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", tokens[index].Line))
 	}
 
-	return argValues, index, nil
+	return formulas, index, nil
 }
 
 func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
@@ -588,7 +596,6 @@ func formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
 		} else {
 			formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
 		}
-
 	} else if tokens[index].Kind == tokenizer.SSTRING {
 		formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SSTRING}
 	}

@@ -59,10 +59,11 @@ func printTokens(tokens []Token) {
 	}
 
 	fmt.Println("--------- tokens ---------")
-	for _, token := range tokens {
+	for i, token := range tokens {
 		fmt.Println("{")
 		fmt.Printf("  Content: %s\n", token.Content)
 		fmt.Printf("     Kind: %s\n", typeToToken[token.Kind])
+		fmt.Printf("    Index: %2d\n", i)
 		fmt.Println("},")
 	}
 }

@@ -20,7 +20,7 @@ func Compile(tokens []tokenizer.Token) (map[string][]InterCode, map[string][]Var
 	}
 
 	// for debug.
-	printInterCodes()
+	printInterCodes("main")
 
 	return functionInterCodeMap, functionVarMap, err
 }

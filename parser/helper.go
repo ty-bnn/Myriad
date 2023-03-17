@@ -39,6 +39,7 @@ func program(tokens []tokenizer.Token, index int) error {
 	}
 	
 	// メイン部
+	fmt.Println("hellllo")
 	index, err = mainFunction(tokens, index)
 	if err != nil {
 		return err

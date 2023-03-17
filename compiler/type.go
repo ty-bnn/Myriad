@@ -54,7 +54,7 @@ type Variable struct {
 	Kind VariableKind
 }
 
-func printInterCodes() {
+func printInterCodes(functionName string) {
 	intToString := map[CodeKind]string{
 		ROW: "row",
 		COMMAND: "command",
@@ -65,8 +65,8 @@ func printInterCodes() {
 		ENDIF: "endif",
 	}
 
-	fmt.Println("--------- inter codes ---------")
-	for i, code := range functionInterCodeMap["main"] {
+	fmt.Printf("--------- inter codes in \"%s\"---------\n", functionName)
+	for i, code := range functionInterCodeMap[functionName] {
 		fmt.Println("{")
 		fmt.Printf("  Content: %s\n", code.Content)
 		fmt.Printf("     Kind: %s\n", intToString[code.Kind])
