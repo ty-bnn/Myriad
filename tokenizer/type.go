@@ -58,6 +58,7 @@ func printTokens(tokens []Token) {
 		SASSIGNVARIABLE: "assignvariable",
 	}
 
+	fmt.Println("--------- tokens ---------")
 	for _, token := range tokens {
 		fmt.Println("{")
 		fmt.Printf("  Content: %s\n", token.Content)

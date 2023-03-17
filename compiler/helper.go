@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"os"
 	"errors"
 
 	"dcc/tokenizer"
@@ -213,10 +214,15 @@ func arguments(tokens []tokenizer.Token, index int) (int, error) {
 // 変数
 func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 	var err error
+	var argument Variable
 
 	// 変数名
 	name := tokens[index].Content
-	argument := Argument{Name: name, Kind: STRING}
+	if functionPointer == "main" {
+		argument = Variable{Name: name, Value:os.Args[argIndex + 3], Kind: ARGUMENT}
+	} else {
+		argument = Variable{Name: name, Kind: ARGUMENT}
+	}
 
 	index, err = variableName(tokens, index)
 	if err != nil {
@@ -225,11 +231,11 @@ func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 
 	// "[]"
 	if tokens[index].Kind == tokenizer.SARRANGE {
-		argument.Kind = ARRAY
+		argument.Kind = VARIABLE
 		index++
 	}
 
-	functionArgMap[functionPointer] = append(functionArgMap[functionPointer], argument)
+	functionVarMap[functionPointer] = append(functionVarMap[functionPointer], argument)
 
 	return index, nil
 }
@@ -267,7 +273,7 @@ func description(tokens []tokenizer.Token, index int) (int, error) {
 		if tokens[index].Kind != tokenizer.SDFCOMMAND && tokens[index].Kind != tokenizer.SDFARG && tokens[index].Kind != tokenizer.SIDENTIFIER && tokens[index].Kind != tokenizer.SIF {
 			break
 		}
-			
+
 		index, err = descriptionBlock(tokens, index)
 		if err != nil {
 			return index, err
@@ -287,9 +293,15 @@ func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 		if err != nil {
 			return index, err
 		}
-	} else if tokens[index].Kind == tokenizer.SIDENTIFIER {
+	} else if tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
 		index, err = functionCall(tokens, index)
+		if err != nil {
+			return index, err
+		}
+	} else if tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SDEFINE {
+		// 変数定義文
+		index, err = defineVariable(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -352,7 +364,12 @@ func dfArg(tokens []tokenizer.Token, index int) (int, error) {
 	if tokens[index].Kind == tokenizer.SDFARG {
 		code = InterCode{Content: content, Kind: ROW}
 	} else if tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
-		code = InterCode{Content: content, Kind: VAR}
+		varIndex, isExist := getVariableIndex(functionPointer, tokens[index].Content)
+		if isExist {
+			code = InterCode{Content: functionVarMap[functionPointer][varIndex].Value, Kind: ROW}
+		} else {
+			code = InterCode{Content: content, Kind: VAR}
+		}
 	}
 	
 	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], code)
@@ -368,10 +385,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 
 	// 関数名
 	if _, ok := functionInterCodeMap[functionCallName]; !ok {
-		for name := range functionInterCodeMap {
-			fmt.Println(name)
-		}
-		return index, errors.New(fmt.Sprintf("semantic error: function %s is not defined in line %d", tokens[index].Content, tokens[index].Line))
+		return index, errors.New(fmt.Sprintf("semantic error: function %s is not defined 1 in line %d", tokens[index].Content, tokens[index].Line))
 	}
 
 	index, err = functionName(tokens, index)
@@ -388,7 +402,44 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: functionCallName, Kind: CALLFUNC, ArgValues: argValues})
+	var newCodes []InterCode
+	for _, code := range functionInterCodeMap[functionCallName] {
+		var newCode InterCode
+		if code.Kind == VAR {
+			argIndex, isExist := getArgumentIndex(functionCallName, code.Content)
+			if isExist {
+				newCode = InterCode{Content: argValues[argIndex], Kind: ROW}
+			} else {
+				return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 2", code.Content))
+			}
+		} else if code.Kind == IF || code.Kind == ELIF {
+			newCode = code
+
+			if code.IfContent.LFormula.Kind == tokenizer.SIDENTIFIER {
+				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.LFormula.Content)
+				if isExist {
+					newCode.IfContent.LFormula = Formula{Content: argValues[argIndex], Kind: tokenizer.SSTRING}
+				} else {
+					return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 3", code.IfContent.LFormula.Content))
+				}
+			}
+
+			if code.IfContent.RFormula.Kind == tokenizer.SIDENTIFIER {
+				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.RFormula.Content)
+				if isExist {
+					newCode.IfContent.RFormula = Formula{Content: argValues[argIndex], Kind: tokenizer.SSTRING}
+				} else {
+					return index, errors.New(fmt.Sprintf("semantic error: variable %s is not defined 4", code.IfContent.RFormula.Content))
+				}
+			}
+		} else {
+			newCode = code
+		}
+
+		newCodes = append(newCodes, newCode)
+	}
+
+	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], newCodes...)
 
 	// ")"
 	index++
@@ -401,20 +452,30 @@ func rowOfStrings(tokens []tokenizer.Token, index int) ([]string, int, error) {
 	var argValues []string
 	functionCallName := tokens[index - 2].Content
 
+	var argNum int
+	// 定義された引数の個数を数える
+	for _, variable := range functionVarMap[functionCallName] {
+		if variable.Kind != ARGUMENT {
+			break
+		}
+
+		argNum++
+	}
+
 	// 文字列
-	for i, _ := range functionArgMap[functionCallName] {
+	for i := 0; i < argNum; i++ {
 		if tokens[index].Kind != tokenizer.SSTRING {
 			return argValues, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
 		}
 
-		// functionArgMap[functionCallName][i].Value = tokens[index].Content
 		argValues = append(argValues, tokens[index].Content)
 		index++
 
-		if i == len(functionArgMap[functionCallName]) - 1 {
+		if len(argValues) == argNum {
 			break
 		}
 
+		// ","
 		index++
 	}
 
@@ -521,7 +582,13 @@ func formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
 	var formula Formula
 
 	if tokens[index].Kind == tokenizer.SIDENTIFIER {
-		formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
+		varIndex, isExist := getVariableIndex(functionPointer, tokens[index].Content)
+		if isExist {
+			formula = Formula{Content: functionVarMap[functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
+		} else {
+			formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
+		}
+
 	} else if tokens[index].Kind == tokenizer.SSTRING {
 		formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SSTRING}
 	}
@@ -606,6 +673,35 @@ func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 	// "}"
 	index++
 	
+	return index, nil
+}
+
+// 変数定義文
+func defineVariable(tokens []tokenizer.Token, index int) (int, error) {
+	var err error
+
+	// 変数名
+	name := tokens[index].Content
+	index, err = variableName(tokens, index)
+	if err != nil {
+		return index, err
+	}
+
+	// ":="
+	index++
+
+	// 文字列
+	value := tokens[index].Content
+	index++
+
+	newVariable := Variable{Name: name, Value: value, Kind: VARIABLE}
+	varIndex, isExist := getVariableIndex(functionPointer, name)
+	if isExist {
+		functionVarMap[functionPointer][varIndex] = newVariable
+	} else {
+		functionVarMap[functionPointer] = append(functionVarMap[functionPointer], newVariable)
+	}
+
 	return index, nil
 }
 

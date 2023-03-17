@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"fmt"
+
 	"dcc/tokenizer"
 )
 
@@ -17,7 +19,6 @@ const (
 	ROW CodeKind = iota
 	COMMAND
 	VAR
-	CALLFUNC
 	IF
 	ELIF
 	ELSE
@@ -41,13 +42,35 @@ const (
 	NOTEQUAL
 )
 
-type ArgumentKind int
+type VariableKind int
 const (
-	STRING ArgumentKind = iota
-	ARRAY
+	VARIABLE VariableKind = iota
+	ARGUMENT
 )
 
-type Argument struct {
+type Variable struct {
 	Name string
-	Kind ArgumentKind
+	Value string
+	Kind VariableKind
+}
+
+func printInterCodes() {
+	intToString := map[CodeKind]string{
+		ROW: "row",
+		COMMAND: "command",
+		VAR: "var",
+		IF: "if",
+		ELIF: "elif",
+		ELSE: "else",
+		ENDIF: "endif",
+	}
+
+	fmt.Println("--------- inter codes ---------")
+	for i, code := range functionInterCodeMap["main"] {
+		fmt.Println("{")
+		fmt.Printf("  Content: %s\n", code.Content)
+		fmt.Printf("     Kind: %s\n", intToString[code.Kind])
+		fmt.Printf("    Index: %2d\n", i)
+		fmt.Println("},")
+	}
 }

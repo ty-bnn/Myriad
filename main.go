@@ -34,7 +34,7 @@ func main() {
 	}
 	
 	// コンパイル
-	functionInterCodeMap, functionArgMap, err := compiler.Compile(tokens)
+	functionInterCodeMap, functionVarMap, err := compiler.Compile(tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -49,7 +49,7 @@ func main() {
 	// }
 
 	// コード生成
-	codes, err := generator.GenerateCode(functionInterCodeMap, functionArgMap)
+	codes, err := generator.GenerateCode(functionInterCodeMap, functionVarMap)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

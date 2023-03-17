@@ -5,18 +5,22 @@ import (
 )
 
 var functionInterCodeMap map[string][]InterCode
-var functionArgMap map[string][]Argument
+var functionVarMap map[string][]Variable
 var functionPointer string
 var readFiles []string
 
-func Compile(tokens []tokenizer.Token) (map[string][]InterCode, map[string][]Argument, error) {
+func Compile(tokens []tokenizer.Token) (map[string][]InterCode, map[string][]Variable, error) {
 	functionInterCodeMap = map[string][]InterCode{}
-	functionArgMap = map[string][]Argument{}
+	functionVarMap = map[string][]Variable{}
+	functionPointer = "main"
 	
 	err := program(tokens, 0)
 	if err != nil {
-		return functionInterCodeMap, functionArgMap, err
+		return functionInterCodeMap, functionVarMap, err
 	}
 
-	return functionInterCodeMap, functionArgMap, err
+	// for debug.
+	printInterCodes()
+
+	return functionInterCodeMap, functionVarMap, err
 }

@@ -1,33 +1,21 @@
 package generator
 
 import (
-	"fmt"
-	"os"
-	"errors"
-
 	"dcc/compiler"
 )
 
 var functionInterCodeMap map[string][]compiler.InterCode
-var functionArgMap map[string][]compiler.Argument
+var functionVarMap map[string][]compiler.Variable
 var argsInMain map[string]string
 var command string
 
-func GenerateCode(fInterCodeMap map[string][]compiler.InterCode, fArgMap map[string][]compiler.Argument) ([]string, error) {
+func GenerateCode(fInterCodeMap map[string][]compiler.InterCode, fArgMap map[string][]compiler.Variable) ([]string, error) {
 	functionInterCodeMap = fInterCodeMap
-	functionArgMap = fArgMap
+	functionVarMap = fArgMap
 	argsInMain = map[string]string{}
 	command = ""
 
-	if len(functionArgMap["main"]) != len(os.Args[3:]) {
-		return []string{}, errors.New(fmt.Sprintf("system error: length of main argument is not match"))
-	}
-
-	for i := 0; i < len(functionArgMap["main"]); i++ {
-		argsInMain[functionArgMap["main"][i].Name] = os.Args[i + 3]
-	}
-
-	_, codes, err := generateCodeBlock(0, "main", os.Args[3:])
+	_, codes, err := generateCodeBlock(0, "main")
 	if err != nil {
 		return codes, err
 	}
