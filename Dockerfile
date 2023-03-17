@@ -1,5 +1,6 @@
 FROM 1.1.1
-RUN good \
+RUN hello \
+    good \
     1.1.1 \
     morning
 CMD [hfsdf]

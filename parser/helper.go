@@ -371,9 +371,9 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 
 	index++
 
-	// 文字列の並び
-	if index < len(tokens) && tokens[index].Kind == tokenizer.SSTRING {
-		index, err = rowOfStrings(tokens, index)
+	// 式の並び
+	if index < len(tokens) && (tokens[index].Kind == tokenizer.SSTRING || tokens[index].Kind == tokenizer.SIDENTIFIER) {
+		index, err = rowOfFormulas(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -389,27 +389,29 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	return index, nil
 }
 
-// 文字列の並び
-func rowOfStrings(tokens []tokenizer.Token, index int) (int, error) {
-	// 文字列
-	if index >= len(tokens) || tokens[index].Kind != tokenizer.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
+// 式の並び
+func rowOfFormulas(tokens []tokenizer.Token, index int) (int, error) {
+	var err error
+	// 式
+	index, err = formula(tokens, index)
+	if err != nil {
+		return index, err
 	}
 
-	index++
-
 	for ;; {
+		// ","
 		if index >= len(tokens) || tokens[index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
 		index++
 
-		if index >= len(tokens) || tokens[index].Kind != tokenizer.SSTRING {
-			return index, errors.New(fmt.Sprintf("syntax error: cannot find a string"))
-		}
 
-		index++
+		// 式
+		index, err = formula(tokens, index)
+		if err != nil {
+			return index, err
+		}
 	}
 
 	return index, nil
@@ -516,7 +518,7 @@ func conditionalFormula(tokens []tokenizer.Token, index int) (int, error) {
 func formula(tokens []tokenizer.Token, index int) (int, error) {
 	// 変数, 文字列
 	if index >= len(tokens) || (tokens[index].Kind != tokenizer.SIDENTIFIER && tokens[index].Kind != tokenizer.SSTRING) {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find formula"))
+		return index, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
 	}
 
 	index++

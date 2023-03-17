@@ -1,7 +1,9 @@
+hello(package) {
+    RUN {{package}}
+}
+
 abc(package) {
-    if (package == "hello") {
-        RUN {{package}}
-    }
+    hello(package)
 }
 
 main()
