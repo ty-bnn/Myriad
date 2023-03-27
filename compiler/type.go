@@ -28,7 +28,8 @@ const (
 type IfContent struct {
 	LFormula, RFormula Formula
 	Operator OperaterKind
-	EndIndex int
+	NextOffset int
+	EndOffset int
 }
 
 type Formula struct {

@@ -1,13 +1,15 @@
-hello(package) {
+abc(package) {
     if (package == "helo") {
+        RUN aaa
+    } else if (package == "hel") {
         RUN {{package}}
-    } else if (package == "hello") {
-        RUN {{package}}
+    } else {
+        if (package == "hel") {
+            RUN bbb
+        } else if (package == "he"){
+            RUN ccc
+        }
     }
-}
-
-abc(pack) {
-    hello(pack)
 }
 
 main()

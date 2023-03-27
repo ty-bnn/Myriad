@@ -4,7 +4,7 @@ import (
 	"dcc/compiler"
 )
 
-func getIfCondition(ifContent compiler.IfContent, functionName string) (bool, error) {
+func getIfCondition(ifContent compiler.IfContent) (bool, error) {
 	var lValue, rValue string
 	lValue = ifContent.LFormula.Content
 	rValue = ifContent.RFormula.Content

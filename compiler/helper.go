@@ -536,6 +536,10 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 		}
 
 		// elif節
+		/*
+		Note: if節の場合はIFのinterCodeを登録してからfunctionInteCodeMap[functionPointer]の長さを登録しているが、
+		      elifとelseの場合はinterCodeを登録する前に長さを登録する必要があるため、-1がいらない         
+		*/
 		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
 		index, err = elifSection(tokens, index)
 		if err != nil {
@@ -544,14 +548,24 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 	}
 
 	if tokens[index].Kind == tokenizer.SELSE {
+		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
 		index, err = elseSection(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	}
 
-	for _, index := range ifIndexes {
-		functionInterCodeMap[functionPointer][index].IfContent.EndIndex = len(functionInterCodeMap[functionPointer])
+	// ifブロックの最後までのオフセットを格納
+	for _, ifIndex := range ifIndexes {
+		functionInterCodeMap[functionPointer][ifIndex].IfContent.EndOffset = len(functionInterCodeMap[functionPointer]) - 1 - ifIndex
+		fmt.Printf("EndOffset: %d\n", functionInterCodeMap[functionPointer][ifIndex].IfContent.EndOffset)
+	}
+
+	// 次のif節（elif, else）までのオフセットを格納
+	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
+	for i := 0; i < len(ifIndexes) - 1; i++{
+		functionInterCodeMap[functionPointer][ifIndexes[i]].IfContent.NextOffset = ifIndexes[i + 1] - ifIndexes[i] - 1
+		fmt.Printf("NextOffset: %d\n", functionInterCodeMap[functionPointer][ifIndexes[i]].IfContent.NextOffset)
 	}
 
 	return index, nil
