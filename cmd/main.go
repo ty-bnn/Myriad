@@ -4,7 +4,7 @@ import(
 	"fmt"
 	"os"
 
-	"dcc/others"
+	"dcc/helpers"
 	"dcc/tokenizer"
 	"dcc/parser"
 	"dcc/compiler"
@@ -13,7 +13,7 @@ import(
 
 func main() {
 	// Myriadファイルから全ての行を読む
-	lines, err := others.ReadLinesFromFile(os.Args[1])
+	lines, err := helpers.ReadLinesFromFile(os.Args[1])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = others.WriteFile(codes, os.Args[2])
+	err = helpers.WriteFile(codes, os.Args[2])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

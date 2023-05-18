@@ -1,4 +1,4 @@
-package others
+package helpers
 
 import (
 	"os"

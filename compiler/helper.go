@@ -7,7 +7,7 @@ import (
 
 	"dcc/tokenizer"
 	"dcc/parser"
-	"dcc/others"
+	"dcc/helpers"
 )
 
 func program(tokens []tokenizer.Token, index int) error {
@@ -79,7 +79,7 @@ func fileName(tokens []tokenizer.Token, index int) (int, error) {
 
 	readFiles = append(readFiles, filePath)
 
-	lines, err := others.ReadLinesFromFile(filePath)
+	lines, err := helpers.ReadLinesFromFile(filePath)
 	if err != nil {
 		return index, err
 	}
