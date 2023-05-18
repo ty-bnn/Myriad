@@ -4,9 +4,13 @@ import (
 	"fmt"
 )
 
-func Tokenize(lines []string) ([]Token, error) {
-	fmt.Println("Tokenize...")
+type Tokenizer struct {
+	Tokens []Token
+}
 
+func (t *Tokenizer) Tokenize(lines []string) (error) {
+	fmt.Println("Tokenize...")
+	
 	var tokens []Token
 	var err error
 	var command string
@@ -96,7 +100,7 @@ func Tokenize(lines []string) ([]Token, error) {
 			}
 
 			if err != nil {
-				return tokens, err
+				return err
 			}
 		}
 	}
@@ -104,5 +108,6 @@ func Tokenize(lines []string) ([]Token, error) {
 	// for Debug.
 	printTokens(tokens)
 
-	return tokens, nil
+	t.Tokens = tokens
+	return nil
 }

@@ -84,17 +84,20 @@ func fileName(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	newTokens, err := tokenizer.Tokenize(lines)
+	t := &tokenizer.Tokenizer{}
+	err = t.Tokenize(lines)
 	if err != nil {
 		return index, err
 	}
 
+	newTokens := t.Tokens
 	// For debug.
 	// for _, token := range newTokens {
 	// 	fmt.Printf("%30s\t%10d\n", token.Content, token.Kind)
 	// }
 
-	err = parser.Parse(newTokens)
+	p := &parser.Parser{}
+	err = p.Parse(newTokens)
 	if err != nil {
 		return index, err
 	}

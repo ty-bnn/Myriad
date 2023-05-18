@@ -4,8 +4,13 @@ import (
 	"dcc/tokenizer"
 )
 
-func Parse(tokens []tokenizer.Token) (error) {
-	err := program(tokens, 0)
+type Parser struct {
+	tokens []tokenizer.Token
+}
+
+func (p *Parser)Parse(tokens []tokenizer.Token) (error) {
+	p.tokens = tokens
+	err := p.program(0)
 	if err != nil {
 		return err
 	}

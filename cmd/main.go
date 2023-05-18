@@ -20,21 +20,23 @@ func main() {
 	}
 
 	// トークナイズ
-	tokens, err := tokenizer.Tokenize(lines)
+	t := &tokenizer.Tokenizer{}
+	err = t.Tokenize(lines)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// パース
-	err = parser.Parse(tokens)
+	p := &parser.Parser{}
+	err = p.Parse(t.Tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	
 	// コンパイル
-	functionInterCodeMap, functionVarMap, err := compiler.Compile(tokens)
+	functionInterCodeMap, functionVarMap, err := compiler.Compile(t.Tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
