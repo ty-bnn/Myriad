@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"errors"
 
-	"dcc/tokenizer"
+	"myriad/tokenizer"
 )
 
 func (p *Parser) program(index int) error {

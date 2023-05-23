@@ -3,7 +3,7 @@ package compiler
 import (
 	"fmt"
 
-	"dcc/tokenizer"
+	"myriad/tokenizer"
 )
 
 // 中間言語

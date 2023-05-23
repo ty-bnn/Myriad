@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"dcc/compiler"
+	"myriad/compiler"
 )
 
 func getIfCondition(ifContent compiler.IfContent) (bool, error) {

@@ -4,11 +4,11 @@ import(
 	"fmt"
 	"os"
 
-	"dcc/helpers"
-	"dcc/tokenizer"
-	"dcc/parser"
-	"dcc/compiler"
-	"dcc/generator"
+	"myriad/helpers"
+	"myriad/tokenizer"
+	"myriad/parser"
+	"myriad/compiler"
+	"myriad/generator"
 )
 
 func main() {
@@ -59,6 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// ファイル出力
 	err = helpers.WriteFile(*g.Codes, os.Args[2])
 	if err != nil {
 		fmt.Println(err)

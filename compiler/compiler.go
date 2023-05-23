@@ -1,7 +1,7 @@
 package compiler
 
 import (
-	"dcc/tokenizer"
+	"myriad/tokenizer"
 )
 
 type Compiler struct {

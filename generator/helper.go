@@ -3,7 +3,7 @@ package generator
 import (
 	"fmt"
 
-	"dcc/compiler"
+	"myriad/compiler"
 )
 
 func (g *Generator) generateCodeBlock(index int) (int, []string, error) {

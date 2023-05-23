@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"dcc/compiler"
+	"myriad/compiler"
 )
 
 var mainCodes []compiler.InterCode

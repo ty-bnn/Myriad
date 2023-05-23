@@ -5,9 +5,9 @@ import (
 	"os"
 	"errors"
 
-	"dcc/tokenizer"
-	"dcc/parser"
-	"dcc/helpers"
+	"myriad/tokenizer"
+	"myriad/parser"
+	"myriad/helpers"
 )
 
 func (c *Compiler) program(tokens []tokenizer.Token, index int) error {

@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"dcc/tokenizer"
+	"myriad/tokenizer"
 )
 
 type Parser struct {
