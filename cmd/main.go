@@ -52,13 +52,14 @@ func main() {
 	// }
 
 	// コード生成
-	codes, err := generator.GenerateCode(*c.FunctionInterCodeMap, *c.FunctionVarMap)
+	g := &generator.Generator{}
+	err = g.GenerateCode(c.FunctionInterCodeMap, c.FunctionVarMap)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	err = helpers.WriteFile(codes, os.Args[2])
+	err = helpers.WriteFile(*g.Codes, os.Args[2])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
