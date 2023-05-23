@@ -36,14 +36,15 @@ func main() {
 	}
 	
 	// コンパイル
-	functionInterCodeMap, functionVarMap, err := compiler.Compile(t.Tokens)
+	c := &compiler.Compiler{}
+	err = c.Compile(t.Tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// For debug
-	// for k, v := range functionInterCodeMap {
+	// for k, v := range *c.FunctionInterCodeMap {
 	// 	fmt.Println(k)
 	// 	for _, c := range v {
 	// 		fmt.Println(c)
@@ -51,7 +52,7 @@ func main() {
 	// }
 
 	// コード生成
-	codes, err := generator.GenerateCode(functionInterCodeMap, functionVarMap)
+	codes, err := generator.GenerateCode(*c.FunctionInterCodeMap, *c.FunctionVarMap)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

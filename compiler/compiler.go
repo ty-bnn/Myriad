@@ -4,24 +4,26 @@ import (
 	"dcc/tokenizer"
 )
 
-var functionInterCodeMap map[string][]InterCode
-var functionVarMap map[string][]Variable
-var functionPointer string
-var readFiles []string
+type Compiler struct {
+	FunctionInterCodeMap *map[string][]InterCode
+	FunctionVarMap *map[string][]Variable
+	functionPointer string
+	readFiles *[]string
+}
 
-func Compile(tokens []tokenizer.Token) (map[string][]InterCode, map[string][]Variable, error) {
-	functionInterCodeMap = map[string][]InterCode{}
-	functionVarMap = map[string][]Variable{}
-	functionPointer = "main"
+func (c *Compiler) Compile(tokens []tokenizer.Token) error {
+	c.FunctionInterCodeMap = &map[string][]InterCode{}
+	c.FunctionVarMap = &map[string][]Variable{}
+	c.functionPointer = "main"
 	
-	err := program(tokens, 0)
+	err := c.program(tokens, 0)
 	if err != nil {
-		return functionInterCodeMap, functionVarMap, err
+		return err
 	}
 
 	// for debug.
-	printInterCodes("main")
-	printInterCodes("abc")
+	c.printInterCodes("main")
+	c.printInterCodes("abc")
 
-	return functionInterCodeMap, functionVarMap, err
+	return err
 }

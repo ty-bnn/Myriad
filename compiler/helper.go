@@ -10,11 +10,11 @@ import (
 	"dcc/helpers"
 )
 
-func program(tokens []tokenizer.Token, index int) error {
+func (c *Compiler) program(tokens []tokenizer.Token, index int) error {
 	var err error
 	// { 関数インポート文 }
 	for tokens[index].Kind == tokenizer.SIMPORT {
-		index, err = importFunc(tokens, index)
+		index, err = c.importFunc(tokens, index)
 		if err != nil {
 			return err
 		}
@@ -26,7 +26,7 @@ func program(tokens []tokenizer.Token, index int) error {
 			break
 		}
 
-		index, err = function(tokens, index)
+		index, err = c.function(tokens, index)
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func program(tokens []tokenizer.Token, index int) error {
 	}
 
 	// メイン部
-	index, err = mainFunction(tokens, index)
+	index, err = c.mainFunction(tokens, index)
 	if err != nil {
 		return err
 	}
@@ -46,13 +46,13 @@ func program(tokens []tokenizer.Token, index int) error {
 }
 
 // 関数インポート文
-func importFunc(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) importFunc(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	// "import"
 	index++
 
 	// 関数名
-	index, err = functionName(tokens, index)
+	index, err = c.functionName(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -61,7 +61,7 @@ func importFunc(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// ファイル名
-	index, err = fileName(tokens, index)
+	index, err = c.fileName(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -70,14 +70,14 @@ func importFunc(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // ファイル名
-func fileName(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) fileName(tokens []tokenizer.Token, index int) (int, error) {
 	filePath := tokens[index].Content
 
-	if isCompiled(filePath) {
+	if c.isCompiled(filePath) {
 		return index + 1, nil
 	}
 
-	readFiles = append(readFiles, filePath)
+	*c.readFiles = append(*c.readFiles, filePath)
 
 	lines, err := helpers.ReadLinesFromFile(filePath)
 	if err != nil {
@@ -102,7 +102,7 @@ func fileName(tokens []tokenizer.Token, index int) (int, error) {
 		return index, err
 	}
 
-	err = program(newTokens, 0)
+	err = c.program(newTokens, 0)
 	if err != nil {
 		return index, err
 	}
@@ -113,25 +113,25 @@ func fileName(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 関数
-func function(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) function(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// 関数名
-	functionPointer = tokens[index].Content
+	c.functionPointer = tokens[index].Content
 
-	index, err = functionName(tokens, index)
+	index, err = c.functionName(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
 	// 引数宣言部
-	index, err = argumentDecralation(tokens, index)
+	index, err = c.argumentDecralation(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
 	// 関数記述部
-	index, err = functionDescription(tokens, index)
+	index, err = c.functionDescription(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -140,22 +140,22 @@ func function(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // メイン部
-func mainFunction(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) mainFunction(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
-	functionPointer = "main"
+	c.functionPointer = "main"
 
 	// "main"
 	index++
 
 	// 引数宣言部
-	index, err = argumentDecralation(tokens, index)
+	index, err = c.argumentDecralation(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
 	// 関数記述部
-	index, err = functionDescription(tokens, index)
+	index, err = c.functionDescription(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -164,7 +164,7 @@ func mainFunction(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 引数宣言部
-func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "("
@@ -172,7 +172,7 @@ func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 
 	// 引数群
 	if 	tokens[index].Kind == tokenizer.SIDENTIFIER {
-		index, err = arguments(tokens, index)
+		index, err = c.arguments(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -185,12 +185,12 @@ func argumentDecralation(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 引数群
-func arguments(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) arguments(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	argIndex := 2
 
 	// 変数
-	index, err = variable(tokens, index, argIndex)
+	index, err = c.variable(tokens, index, argIndex)
 	if err != nil {
 		return index, err
 	}
@@ -205,7 +205,7 @@ func arguments(tokens []tokenizer.Token, index int) (int, error) {
 		index++
 		
 		// 変数
-		index, err = variable(tokens, index, argIndex)
+		index, err = c.variable(tokens, index, argIndex)
 		if err != nil {
 			return index, err
 		}
@@ -215,19 +215,19 @@ func arguments(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 変数
-func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
+func (c *Compiler) variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 	var err error
 	var argument Variable
 
 	// 変数名
 	name := tokens[index].Content
-	if functionPointer == "main" {
+	if c.functionPointer == "main" {
 		argument = Variable{Name: name, Value:os.Args[argIndex + 3], Kind: ARGUMENT}
 	} else {
 		argument = Variable{Name: name, Kind: ARGUMENT}
 	}
 
-	index, err = variableName(tokens, index)
+	index, err = c.variableName(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -238,20 +238,20 @@ func variable(tokens []tokenizer.Token, index int, argIndex int) (int, error) {
 		index++
 	}
 
-	functionVarMap[functionPointer] = append(functionVarMap[functionPointer], argument)
+	(*c.FunctionVarMap)[c.functionPointer] = append((*c.FunctionVarMap)[c.functionPointer], argument)
 
 	return index, nil
 }
 
 // 関数記述部
-func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) functionDescription(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "{"
 	index++
 
 	// 記述部
-	index, err = description(tokens, index)
+	index, err = c.description(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -263,11 +263,11 @@ func functionDescription(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 記述部
-func description(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) description(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// 記述ブロック
-	index, err = descriptionBlock(tokens, index)
+	index, err = c.descriptionBlock(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -277,7 +277,7 @@ func description(tokens []tokenizer.Token, index int) (int, error) {
 			break
 		}
 
-		index, err = descriptionBlock(tokens, index)
+		index, err = c.descriptionBlock(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -287,30 +287,30 @@ func description(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 記述ブロック
-func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	if tokens[index].Kind == tokenizer.SDFCOMMAND || tokens[index].Kind == tokenizer.SDFARG {
 		// Dfile文
-		index, err = dockerFile(tokens, index)
+		index, err = c.dockerFile(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	} else if tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
-		index, err = functionCall(tokens, index)
+		index, err = c.functionCall(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	} else if tokens[index].Kind == tokenizer.SIDENTIFIER && tokens[index + 1].Kind == tokenizer.SDEFINE {
 		// 変数定義文
-		index, err = defineVariable(tokens, index)
+		index, err = c.defineVariable(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	} else if tokens[index].Kind == tokenizer.SIF {
 		// ifブロック
-		index, err = ifBlock(tokens, index)
+		index, err = c.ifBlock(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -320,16 +320,16 @@ func descriptionBlock(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Dfile文
-func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	if tokens[index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Content: tokens[index].Content, Kind: COMMAND})
+		(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Content: tokens[index].Content, Kind: COMMAND})
 		index++
 	}
 
 	// Df引数
-	index, err = dfArgs(tokens, index)
+	index, err = c.dfArgs(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -338,16 +338,16 @@ func dockerFile(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Df引数部
-func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
-	index, err = dfArg(tokens, index)
+	index, err = c.dfArg(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
 	for ;; {
 		if tokens[index].Kind == tokenizer.SDFARG || tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
-			index, err = dfArg(tokens, index)
+			index, err = c.dfArg(tokens, index)
 			if err != nil {
 				return index, err
 			}
@@ -360,38 +360,38 @@ func dfArgs(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // Df引数
-func dfArg(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) dfArg(tokens []tokenizer.Token, index int) (int, error) {
 	content := tokens[index].Content
 
 	var code InterCode
 	if tokens[index].Kind == tokenizer.SDFARG {
 		code = InterCode{Content: content, Kind: ROW}
 	} else if tokens[index].Kind == tokenizer.SASSIGNVARIABLE {
-		varIndex, isExist := getVariableIndex(functionPointer, tokens[index].Content)
+		varIndex, isExist := c.getVariableIndex(c.functionPointer, tokens[index].Content)
 		if isExist {
-			code = InterCode{Content: functionVarMap[functionPointer][varIndex].Value, Kind: ROW}
+			code = InterCode{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: ROW}
 		} else {
 			code = InterCode{Content: content, Kind: VAR}
 		}
 	}
 	
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], code)
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], code)
 	index++
 
 	return index, nil
 }
 
 // 関数呼び出し文
-func functionCall(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	functionCallName := tokens[index].Content
 
 	// 関数名
-	if _, ok := functionInterCodeMap[functionCallName]; !ok {
+	if _, ok := (*c.FunctionInterCodeMap)[functionCallName]; !ok {
 		return index, errors.New(fmt.Sprintf("semantic error: function %s is not defined 1 in line %d", tokens[index].Content, tokens[index].Line))
 	}
 
-	index, err = functionName(tokens, index)
+	index, err = c.functionName(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -400,16 +400,16 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 式の並び
-	formulas, index, err := rowOfFormulas(tokens, index)
+	formulas, index, err := c.rowOfFormulas(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
 	var newCodes []InterCode
-	for _, code := range functionInterCodeMap[functionCallName] {
+	for _, code := range (*c.FunctionInterCodeMap)[functionCallName] {
 		var newCode InterCode
 		if code.Kind == VAR {
-			argIndex, isExist := getArgumentIndex(functionCallName, code.Content)
+			argIndex, isExist := c.getArgumentIndex(functionCallName, code.Content)
 			if isExist && formulas[argIndex].Kind == tokenizer.SSTRING {
 				newCode = InterCode{Content: formulas[argIndex].Content, Kind: ROW}
 			} else if isExist && formulas[argIndex].Kind == tokenizer.SIDENTIFIER {
@@ -421,7 +421,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 			newCode = code
 
 			if code.IfContent.LFormula.Kind == tokenizer.SIDENTIFIER {
-				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.LFormula.Content)
+				argIndex, isExist := c.getArgumentIndex(functionCallName, code.IfContent.LFormula.Content)
 				if isExist {
 					newCode.IfContent.LFormula = formulas[argIndex]
 				} else {
@@ -430,7 +430,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 			}
 
 			if code.IfContent.RFormula.Kind == tokenizer.SIDENTIFIER {
-				argIndex, isExist := getArgumentIndex(functionCallName, code.IfContent.RFormula.Content)
+				argIndex, isExist := c.getArgumentIndex(functionCallName, code.IfContent.RFormula.Content)
 				if isExist {
 					newCode.IfContent.RFormula = formulas[argIndex]
 				} else {
@@ -444,7 +444,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 		newCodes = append(newCodes, newCode)
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], newCodes...)
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], newCodes...)
 
 	// ")"
 	index++
@@ -453,7 +453,7 @@ func functionCall(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 式の並び
-func rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) {
+func (c *Compiler) rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) {
 	var err error
 	var fml Formula
 	var formulas []Formula
@@ -461,7 +461,7 @@ func rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) 
 
 	var argNum int
 	// 定義された引数の個数を数える
-	for _, variable := range functionVarMap[functionCallName] {
+	for _, variable := range (*c.FunctionVarMap)[functionCallName] {
 		if variable.Kind != ARGUMENT {
 			break
 		}
@@ -475,7 +475,7 @@ func rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) 
 			return formulas, index, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", tokens[index].Line))
 		}
 
-		fml, index, err = formula(tokens, index)
+		fml, index, err = c.formula(tokens, index)
 		if err != nil {
 			return formulas, index, err
 		}
@@ -497,7 +497,7 @@ func rowOfFormulas(tokens []tokenizer.Token, index int) ([]Formula, int, error) 
 	return formulas, index, nil
 }
 
-func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 	var ifIndexes []int
 
@@ -508,13 +508,13 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 条件判定式
-	ifContent, index, err := conditionalFormula(tokens, index)
+	ifContent, index, err := c.conditionalFormula(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: IF, IfContent: ifContent})
-	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]) - 1)
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: IF, IfContent: ifContent})
+	ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]) - 1)
 
 	// ")"
 	index++
@@ -523,12 +523,12 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 記述部
-	index, err = description(tokens, index)
+	index, err = c.description(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++
@@ -540,19 +540,19 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 
 		// elif節
 		/*
-		Note: if節の場合はIFのinterCodeを登録してからfunctionInteCodeMap[functionPointer]の長さを登録しているが、
+		Note: if節の場合はIFのinterCodeを登録してからfunctionInteCodeMap[c.functionPointer]の長さを登録しているが、
 		      elifとelseの場合はinterCodeを登録する前に長さを登録する必要があるため、-1がいらない         
 		*/
-		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
-		index, err = elifSection(tokens, index)
+		ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
+		index, err = c.elifSection(tokens, index)
 		if err != nil {
 			return index, err
 		}
 	}
 
 	if tokens[index].Kind == tokenizer.SELSE {
-		ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
-		index, err = elseSection(tokens, index)
+		ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
+		index, err = c.elseSection(tokens, index)
 		if err != nil {
 			return index, err
 		}
@@ -560,38 +560,38 @@ func ifBlock(tokens []tokenizer.Token, index int) (int, error) {
 
 	// ifブロックの最後までのオフセットを格納
 	for _, ifIndex := range ifIndexes {
-		functionInterCodeMap[functionPointer][ifIndex].IfContent.EndOffset = len(functionInterCodeMap[functionPointer]) - 1 - ifIndex
-		fmt.Printf("EndOffset: %d\n", functionInterCodeMap[functionPointer][ifIndex].IfContent.EndOffset)
+		(*c.FunctionInterCodeMap)[c.functionPointer][ifIndex].IfContent.EndOffset = len((*c.FunctionInterCodeMap)[c.functionPointer]) - 1 - ifIndex
+		fmt.Printf("EndOffset: %d\n", (*c.FunctionInterCodeMap)[c.functionPointer][ifIndex].IfContent.EndOffset)
 	}
 
 	// 次のif節（elif, else）までのオフセットを格納
-	ifIndexes = append(ifIndexes, len(functionInterCodeMap[functionPointer]))
+	ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
 	for i := 0; i < len(ifIndexes) - 1; i++{
-		functionInterCodeMap[functionPointer][ifIndexes[i]].IfContent.NextOffset = ifIndexes[i + 1] - ifIndexes[i] - 1
-		fmt.Printf("NextOffset: %d\n", functionInterCodeMap[functionPointer][ifIndexes[i]].IfContent.NextOffset)
+		(*c.FunctionInterCodeMap)[c.functionPointer][ifIndexes[i]].IfContent.NextOffset = ifIndexes[i + 1] - ifIndexes[i] - 1
+		fmt.Printf("NextOffset: %d\n", (*c.FunctionInterCodeMap)[c.functionPointer][ifIndexes[i]].IfContent.NextOffset)
 	}
 
 	return index, nil
 }
 
 // 条件判定式
-func conditionalFormula(tokens []tokenizer.Token, index int) (IfContent, int, error) {
+func (c *Compiler) conditionalFormula(tokens []tokenizer.Token, index int) (IfContent, int, error) {
 	var ifContent IfContent
 	var err error
 	// 式
-	lFormula, index, err := formula(tokens, index)
+	lFormula, index, err := c.formula(tokens, index)
 	if err != nil {
 		return ifContent, index, err
 	}
 
 	// 比較演算子
-	op, index, err := conditionalOperator(tokens, index)
+	op, index, err := c.conditionalOperator(tokens, index)
 	if err != nil {
 		return ifContent, index, err
 	}
 
 	// 式
-	rFormula, index, err := formula(tokens, index)
+	rFormula, index, err := c.formula(tokens, index)
 	if err != nil {
 		return ifContent, index, err
 	}
@@ -602,14 +602,14 @@ func conditionalFormula(tokens []tokenizer.Token, index int) (IfContent, int, er
 }
 
 // 式
-func formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
+func (c *Compiler) formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
 	// 変数, 文字列
 	var formula Formula
 
 	if tokens[index].Kind == tokenizer.SIDENTIFIER {
-		varIndex, isExist := getVariableIndex(functionPointer, tokens[index].Content)
+		varIndex, isExist := c.getVariableIndex(c.functionPointer, tokens[index].Content)
 		if isExist {
-			formula = Formula{Content: functionVarMap[functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
+			formula = Formula{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
 		} else {
 			formula = Formula{Content: tokens[index].Content, Kind: tokenizer.SIDENTIFIER}
 		}
@@ -623,7 +623,7 @@ func formula(tokens []tokenizer.Token, index int) (Formula, int, error) {
 }
 
 // 比較演算子
-func conditionalOperator(tokens []tokenizer.Token, index int) (OperaterKind, int, error) {
+func (c *Compiler) conditionalOperator(tokens []tokenizer.Token, index int) (OperaterKind, int, error) {
 	var op OperaterKind
 	if tokens[index].Kind == tokenizer.SEQUAL {
 		op = EQUAL
@@ -637,7 +637,7 @@ func conditionalOperator(tokens []tokenizer.Token, index int) (OperaterKind, int
 }
 
 // elif節
-func elifSection(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) elifSection(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "else if"
@@ -647,12 +647,12 @@ func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 条件判定式
-	ifContent, index, err := conditionalFormula(tokens, index)
+	ifContent, index, err := c.conditionalFormula(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ELIF, IfContent: ifContent})
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ELIF, IfContent: ifContent})
 
 	// ")"
 	index++
@@ -661,12 +661,12 @@ func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 記述部
-	index, err = description(tokens, index)
+	index, err = c.description(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++
@@ -675,11 +675,11 @@ func elifSection(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // else節
-func elseSection(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) elseSection(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// "else"
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ELSE})
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ELSE})
 	
 	index++
 
@@ -687,12 +687,12 @@ func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	// 記述部
-	index, err = description(tokens, index)
+	index, err = c.description(tokens, index)
 	if err != nil {
 		return index, err
 	}
 
-	functionInterCodeMap[functionPointer] = append(functionInterCodeMap[functionPointer], InterCode{Kind: ENDIF})
+	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	index++
@@ -701,12 +701,12 @@ func elseSection(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 変数定義文
-func defineVariable(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) defineVariable(tokens []tokenizer.Token, index int) (int, error) {
 	var err error
 
 	// 変数名
 	name := tokens[index].Content
-	index, err = variableName(tokens, index)
+	index, err = c.variableName(tokens, index)
 	if err != nil {
 		return index, err
 	}
@@ -719,18 +719,18 @@ func defineVariable(tokens []tokenizer.Token, index int) (int, error) {
 	index++
 
 	newVariable := Variable{Name: name, Value: value, Kind: VARIABLE}
-	varIndex, isExist := getVariableIndex(functionPointer, name)
+	varIndex, isExist := c.getVariableIndex(c.functionPointer, name)
 	if isExist {
-		functionVarMap[functionPointer][varIndex] = newVariable
+		(*c.FunctionVarMap)[c.functionPointer][varIndex] = newVariable
 	} else {
-		functionVarMap[functionPointer] = append(functionVarMap[functionPointer], newVariable)
+		(*c.FunctionVarMap)[c.functionPointer] = append((*c.FunctionVarMap)[c.functionPointer], newVariable)
 	}
 
 	return index, nil
 }
 
 // 関数名
-func functionName(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) functionName(tokens []tokenizer.Token, index int) (int, error) {
 	// 名前
 	index++
 
@@ -738,7 +738,7 @@ func functionName(tokens []tokenizer.Token, index int) (int, error) {
 }
 
 // 変数名
-func variableName(tokens []tokenizer.Token, index int) (int, error) {
+func (c *Compiler) variableName(tokens []tokenizer.Token, index int) (int, error) {
 	// 名前
 	index++
 
