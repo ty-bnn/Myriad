@@ -37,7 +37,7 @@ func main() {
 	
 	// コンパイル
 	c := &compiler.Compiler{}
-	err = c.Compile(&t.Tokens)
+	err = c.Compile(t.Tokens)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

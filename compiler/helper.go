@@ -10,13 +10,13 @@ import (
 	"myriad/helpers"
 )
 
-func (c *Compiler) program(tokens *[]tokenizer.Token, index int) error {
+func (c *Compiler) program(tokens []tokenizer.Token, index int) error {
 	var err error
 	c.tokens = tokens
 	c.index = index
 
 	// { 関数インポート文 }
-	for (*c.tokens)[c.index].Kind == tokenizer.SIMPORT {
+	for c.tokens[c.index].Kind == tokenizer.SIMPORT {
 		err = c.importFunc()
 		if err != nil {
 			return err
@@ -24,8 +24,8 @@ func (c *Compiler) program(tokens *[]tokenizer.Token, index int) error {
 	}
 
 	// { 関数 }
-	for index < len(*c.tokens) {
-		if (*c.tokens)[c.index].Kind != tokenizer.SIDENTIFIER {
+	for index < len(c.tokens) {
+		if c.tokens[c.index].Kind != tokenizer.SIDENTIFIER {
 			break
 		}
 
@@ -35,7 +35,7 @@ func (c *Compiler) program(tokens *[]tokenizer.Token, index int) error {
 		}
 	}
 	
-	if index >= len(*c.tokens) || (*c.tokens)[c.index].Kind != tokenizer.SMAIN {
+	if index >= len(c.tokens) || c.tokens[c.index].Kind != tokenizer.SMAIN {
 		return nil
 	}
 
@@ -74,7 +74,7 @@ func (c *Compiler) importFunc() error {
 
 // ファイル名
 func (c *Compiler) fileName() error {
-	filePath := (*c.tokens)[c.index].Content
+	filePath := c.tokens[c.index].Content
 
 	if c.isCompiled(filePath) {
 		c.index++
@@ -106,7 +106,7 @@ func (c *Compiler) fileName() error {
 		return err
 	}
 
-	err = c.program(&newTokens, 0)
+	err = c.program(newTokens, 0)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (c *Compiler) function() error {
 	var err error
 
 	// 関数名
-	c.functionPointer = (*c.tokens)[c.index].Content
+	c.functionPointer = c.tokens[c.index].Content
 
 	err = c.functionName()
 	if err != nil {
@@ -175,7 +175,7 @@ func (c *Compiler) argumentDecralation() error {
 	c.index++
 
 	// 引数群
-	if 	(*c.tokens)[c.index].Kind == tokenizer.SIDENTIFIER {
+	if 	c.tokens[c.index].Kind == tokenizer.SIDENTIFIER {
 		err = c.arguments()
 		if err != nil {
 			return err
@@ -202,7 +202,7 @@ func (c *Compiler) arguments() error {
 	for ;; {
 		argIndex++
 		// ","
-		if (*c.tokens)[c.index].Kind != tokenizer.SCOMMA {
+		if c.tokens[c.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
@@ -224,7 +224,7 @@ func (c *Compiler) variable(argIndex int) error {
 	var argument Variable
 
 	// 変数名
-	name := (*c.tokens)[c.index].Content
+	name := c.tokens[c.index].Content
 	if c.functionPointer == "main" {
 		argument = Variable{Name: name, Value:os.Args[argIndex + 3], Kind: ARGUMENT}
 	} else {
@@ -237,7 +237,7 @@ func (c *Compiler) variable(argIndex int) error {
 	}
 
 	// "[]"
-	if (*c.tokens)[c.index].Kind == tokenizer.SARRANGE {
+	if c.tokens[c.index].Kind == tokenizer.SARRANGE {
 		argument.Kind = VARIABLE
 		c.index++
 	}
@@ -277,7 +277,7 @@ func (c *Compiler) description() error {
 	}
 
 	for ;; {
-		if (*c.tokens)[c.index].Kind != tokenizer.SDFCOMMAND && (*c.tokens)[c.index].Kind != tokenizer.SDFARG && (*c.tokens)[c.index].Kind != tokenizer.SIDENTIFIER && (*c.tokens)[c.index].Kind != tokenizer.SIF {
+		if c.tokens[c.index].Kind != tokenizer.SDFCOMMAND && c.tokens[c.index].Kind != tokenizer.SDFARG && c.tokens[c.index].Kind != tokenizer.SIDENTIFIER && c.tokens[c.index].Kind != tokenizer.SIF {
 			break
 		}
 
@@ -294,25 +294,25 @@ func (c *Compiler) description() error {
 func (c *Compiler) descriptionBlock() error {
 	var err error
 
-	if (*c.tokens)[c.index].Kind == tokenizer.SDFCOMMAND || (*c.tokens)[c.index].Kind == tokenizer.SDFARG {
+	if c.tokens[c.index].Kind == tokenizer.SDFCOMMAND || c.tokens[c.index].Kind == tokenizer.SDFARG {
 		// Dfile文
 		err = c.dockerFile()
 		if err != nil {
 			return err
 		}
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SIDENTIFIER && (*c.tokens)[c.index + 1].Kind == tokenizer.SLPAREN {
+	} else if c.tokens[c.index].Kind == tokenizer.SIDENTIFIER && c.tokens[c.index + 1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
 		err = c.functionCall()
 		if err != nil {
 			return err
 		}
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SIDENTIFIER && (*c.tokens)[c.index + 1].Kind == tokenizer.SDEFINE {
+	} else if c.tokens[c.index].Kind == tokenizer.SIDENTIFIER && c.tokens[c.index + 1].Kind == tokenizer.SDEFINE {
 		// 変数定義文
 		err = c.defineVariable()
 		if err != nil {
 			return err
 		}
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SIF {
+	} else if c.tokens[c.index].Kind == tokenizer.SIF {
 		// ifブロック
 		err = c.ifBlock()
 		if err != nil {
@@ -326,9 +326,9 @@ func (c *Compiler) descriptionBlock() error {
 // Dfile文
 func (c *Compiler) dockerFile() error {
 	var err error
-	if (*c.tokens)[c.index].Kind == tokenizer.SDFCOMMAND {
+	if c.tokens[c.index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Content: (*c.tokens)[c.index].Content, Kind: COMMAND})
+		(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Content: c.tokens[c.index].Content, Kind: COMMAND})
 		c.index++
 	}
 
@@ -350,7 +350,7 @@ func (c *Compiler) dfArgs() error {
 	}
 
 	for ;; {
-		if (*c.tokens)[c.index].Kind == tokenizer.SDFARG || (*c.tokens)[c.index].Kind == tokenizer.SASSIGNVARIABLE {
+		if c.tokens[c.index].Kind == tokenizer.SDFARG || c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
 			err = c.dfArg()
 			if err != nil {
 				return err
@@ -365,13 +365,13 @@ func (c *Compiler) dfArgs() error {
 
 // Df引数
 func (c *Compiler) dfArg() error {
-	content := (*c.tokens)[c.index].Content
+	content := c.tokens[c.index].Content
 
 	var code InterCode
-	if (*c.tokens)[c.index].Kind == tokenizer.SDFARG {
+	if c.tokens[c.index].Kind == tokenizer.SDFARG {
 		code = InterCode{Content: content, Kind: ROW}
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SASSIGNVARIABLE {
-		varIndex, isExist := c.getVariableIndex(c.functionPointer, (*c.tokens)[c.index].Content)
+	} else if c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
+		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
 			code = InterCode{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: ROW}
 		} else {
@@ -388,11 +388,11 @@ func (c *Compiler) dfArg() error {
 // 関数呼び出し文
 func (c *Compiler) functionCall() error {
 	var err error
-	functionCallName := (*c.tokens)[c.index].Content
+	functionCallName := c.tokens[c.index].Content
 
 	// 関数名
 	if _, ok := (*c.FunctionInterCodeMap)[functionCallName]; !ok {
-		return errors.New(fmt.Sprintf("semantic error: function %s is not defined 1 in line %d", (*c.tokens)[c.index].Content, (*c.tokens)[c.index].Line))
+		return errors.New(fmt.Sprintf("semantic error: function %s is not defined 1 in line %d", c.tokens[c.index].Content, c.tokens[c.index].Line))
 	}
 
 	err = c.functionName()
@@ -461,7 +461,7 @@ func (c *Compiler) rowOfFormulas() ([]Formula, error) {
 	var err error
 	var fml Formula
 	var formulas []Formula
-	functionCallName := (*c.tokens)[c.index - 2].Content
+	functionCallName := c.tokens[c.index - 2].Content
 
 	var argNum int
 	// 定義された引数の個数を数える
@@ -475,8 +475,8 @@ func (c *Compiler) rowOfFormulas() ([]Formula, error) {
 
 	for i := 0; i < argNum; i++ {
 		// 式
-		if (*c.tokens)[c.index].Kind != tokenizer.SSTRING && (*c.tokens)[c.index].Kind != tokenizer.SIDENTIFIER {
-			return formulas, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", (*c.tokens)[c.index].Line))
+		if c.tokens[c.index].Kind != tokenizer.SSTRING && c.tokens[c.index].Kind != tokenizer.SIDENTIFIER {
+			return formulas, errors.New(fmt.Sprintf("semantic error: not enough arguments in line %d", c.tokens[c.index].Line))
 		}
 
 		fml, err = c.formula()
@@ -494,8 +494,8 @@ func (c *Compiler) rowOfFormulas() ([]Formula, error) {
 		c.index++
 	}
 
-	if (*c.tokens)[c.index].Kind == tokenizer.SCOMMA {
-		return formulas, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", (*c.tokens)[c.index].Line))
+	if c.tokens[c.index].Kind == tokenizer.SCOMMA {
+		return formulas, errors.New(fmt.Sprintf("semantic error: too many arguments in line %d", c.tokens[c.index].Line))
 	}
 
 	return formulas, nil
@@ -538,7 +538,7 @@ func (c *Compiler) ifBlock() error {
 	c.index++
 
 	for ;; {
-		if (*c.tokens)[c.index].Kind != tokenizer.SELIF {
+		if c.tokens[c.index].Kind != tokenizer.SELIF {
 			break
 		}
 
@@ -554,7 +554,7 @@ func (c *Compiler) ifBlock() error {
 		}
 	}
 
-	if (*c.tokens)[c.index].Kind == tokenizer.SELSE {
+	if c.tokens[c.index].Kind == tokenizer.SELSE {
 		ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
 		err = c.elseSection()
 		if err != nil {
@@ -610,15 +610,15 @@ func (c *Compiler) formula() (Formula, error) {
 	// 変数, 文字列
 	var formula Formula
 
-	if (*c.tokens)[c.index].Kind == tokenizer.SIDENTIFIER {
-		varIndex, isExist := c.getVariableIndex(c.functionPointer, (*c.tokens)[c.index].Content)
+	if c.tokens[c.index].Kind == tokenizer.SIDENTIFIER {
+		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
 			formula = Formula{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
 		} else {
-			formula = Formula{Content: (*c.tokens)[c.index].Content, Kind: tokenizer.SIDENTIFIER}
+			formula = Formula{Content: c.tokens[c.index].Content, Kind: tokenizer.SIDENTIFIER}
 		}
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SSTRING {
-		formula = Formula{Content: (*c.tokens)[c.index].Content, Kind: tokenizer.SSTRING}
+	} else if c.tokens[c.index].Kind == tokenizer.SSTRING {
+		formula = Formula{Content: c.tokens[c.index].Content, Kind: tokenizer.SSTRING}
 	}
 
 	c.index++
@@ -629,9 +629,9 @@ func (c *Compiler) formula() (Formula, error) {
 // 比較演算子
 func (c *Compiler) conditionalOperator() (OperaterKind, error) {
 	var op OperaterKind
-	if (*c.tokens)[c.index].Kind == tokenizer.SEQUAL {
+	if c.tokens[c.index].Kind == tokenizer.SEQUAL {
 		op = EQUAL
-	} else if (*c.tokens)[c.index].Kind == tokenizer.SNOTEQUAL {
+	} else if c.tokens[c.index].Kind == tokenizer.SNOTEQUAL {
 		op = NOTEQUAL
 	}
 	// 比較演算子
@@ -709,7 +709,7 @@ func (c *Compiler) defineVariable() error {
 	var err error
 
 	// 変数名
-	name := (*c.tokens)[c.index].Content
+	name := c.tokens[c.index].Content
 	err = c.variableName()
 	if err != nil {
 		return err
@@ -719,7 +719,7 @@ func (c *Compiler) defineVariable() error {
 	c.index++
 
 	// 文字列
-	value := (*c.tokens)[c.index].Content
+	value := c.tokens[c.index].Content
 	c.index++
 
 	newVariable := Variable{Name: name, Value: value, Kind: VARIABLE}

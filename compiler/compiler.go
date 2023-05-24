@@ -5,7 +5,7 @@ import (
 )
 
 type Compiler struct {
-	tokens *[]tokenizer.Token
+	tokens []tokenizer.Token
 	FunctionInterCodeMap *map[string][]InterCode
 	FunctionVarMap *map[string][]Variable
 	functionPointer string
@@ -13,7 +13,7 @@ type Compiler struct {
 	index int
 }
 
-func (c *Compiler) Compile(tokens *[]tokenizer.Token) error {
+func (c *Compiler) Compile(tokens []tokenizer.Token) error {
 	c.FunctionInterCodeMap = &map[string][]InterCode{}
 	c.FunctionVarMap = &map[string][]Variable{}
 	c.functionPointer = "main"
