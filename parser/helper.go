@@ -7,16 +7,16 @@ import (
 	"myriad/tokenizer"
 )
 
-func (p *Parser) program(index int) error {
+func (p *Parser) program() error {
 	var err error
 
 	// { 関数インポート文 }
 	for ;; {
-		if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SIMPORT {
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIMPORT {
 			break
 		}
 
-		index, err = p.importFunc(index)
+		err = p.importFunc()
 		if err != nil {
 			return err
 		}
@@ -24,22 +24,22 @@ func (p *Parser) program(index int) error {
 
 	// { 関数 }
 	for ;; {
-		if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SIDENTIFIER {
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIDENTIFIER {
 			break
 		}
 
-		index, err = p.function(index)
+		err = p.function()
 		if err != nil {
 			return err
 		}
 	}
 
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SMAIN {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SMAIN {
 		return nil
 	}
 	
 	// メイン部
-	index, err = p.mainFunction(index)
+	err = p.mainFunction()
 	if err != nil {
 		return err
 	}
@@ -48,629 +48,629 @@ func (p *Parser) program(index int) error {
 }
 
 // 関数インポート文
-func (p *Parser) importFunc(index int) (int, error) {
+func (p *Parser) importFunc() error {
 	var err error
 	// "import"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SIMPORT {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'import'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIMPORT {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'import'"))
 	}
 
-	index++
+	p.index++
 
 	// 関数名
-	index, err = p.functionName(index)
+	err = p.functionName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "from"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SFROM {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'from'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SFROM {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'from'"))
 	}
 
-	index++
+	p.index++
 
 	// ファイル名
-	index, err = p.fileName(index)
+	err = p.fileName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
-	return index, nil
+	return nil
 }
 
 // ファイル名
-func (p *Parser) fileName(index int) (int, error) {
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
+func (p *Parser) fileName() error {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SSTRING {
+		return errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 関数
-func (p *Parser) function(index int) (int, error) {
+func (p *Parser) function() error {
 	var err error
 
 	// 関数名
-	index, err = p.functionName(index)
+	err = p.functionName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// 引数宣言部
-	index, err = p.argumentDecralation(index)
+	err = p.argumentDecralation()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// 関数記述部
-	index, err = p.functionDescription(index)
+	err = p.functionDescription()
 	if err != nil {
-		return index, err
+		return err
 	}
 
-	return index, nil
+	return nil
 }
 
 // メイン部
-func (p *Parser) mainFunction(index int) (int, error) {
+func (p *Parser) mainFunction() error {
 	var err error
 
 	// "main"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SMAIN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'main' to declare"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SMAIN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'main' to declare"))
 	}
 
-	index++
+	p.index++
 
 	// 引数宣言部
-	index, err = p.argumentDecralation(index)
+	err = p.argumentDecralation()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// 関数記述部
-	index, err = p.functionDescription(index)
+	err = p.functionDescription()
 	if err != nil {
-		return index, err
+		return err
 	}
 
-	return index, nil
+	return nil
 }
 
 // 引数宣言部
-func (p *Parser) argumentDecralation(index int) (int, error) {
+func (p *Parser) argumentDecralation() error {
 	var err error
 
 	// "("
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
-	index++
+	p.index++
 
 	// 引数群
-	if 	index < len(p.tokens) && p.tokens[index].Kind == tokenizer.SIDENTIFIER {
-		index, err = p.arguments(index)
+	if 	p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER {
+		err = p.arguments()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
 	// ")"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 引数群
-func (p *Parser) arguments(index int) (int, error) {
+func (p *Parser) arguments() error {
 	var err error
 
 	// 変数
-	index, err = p.variable(index)
+	err = p.variable()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	for ;; {
 		// ","
-		if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SCOMMA {
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
-		index++
+		p.index++
 		
 		// 変数
-		index, err = p.variable(index)
+		err = p.variable()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
-	return index, nil
+	return nil
 }
 
 // 変数
-func (p *Parser) variable(index int) (int, error) {
+func (p *Parser) variable() error {
 	var err error
 
 	// 変数名
-	index, err = p.variableName(index)
+	err = p.variableName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "[]"
-	if index < len(p.tokens) && p.tokens[index].Kind == tokenizer.SARRANGE {
-		index++
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SARRANGE {
+		p.index++
 	}
 
-	return index, nil
+	return nil
 }
 
 // 関数記述部
-func (p *Parser) functionDescription(index int) (int, error) {
+func (p *Parser) functionDescription() error {
 	var err error
 
 	// "{"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SLBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 
-	index++
+	p.index++
 
 	// 記述部
-	index, err = p.description(index)
+	err = p.description()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "}"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SRBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 記述部
-func (p *Parser) description(index int) (int, error) {
+func (p *Parser) description() error {
 	var err error
 
 	// 記述ブロック
-	index, err = p.descriptionBlock(index)
+	err = p.descriptionBlock()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	for ;; {
-		if index >= len(p.tokens) || (p.tokens[index].Kind != tokenizer.SDFCOMMAND && p.tokens[index].Kind != tokenizer.SDFARG && p.tokens[index].Kind != tokenizer.SIDENTIFIER && p.tokens[index].Kind != tokenizer.SIF) {
+		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SIDENTIFIER && p.tokens[p.index].Kind != tokenizer.SIF) {
 			break
 		}
 			
-		index, err = p.descriptionBlock(index)
+		err = p.descriptionBlock()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
-	return index, nil
+	return nil
 }
 
 // 記述ブロック
-func (p *Parser) descriptionBlock(index int) (int, error) {
+func (p *Parser) descriptionBlock() error {
 	var err error
 
-	if index < len(p.tokens) && p.tokens[index].Kind == tokenizer.SDFCOMMAND || p.tokens[index].Kind == tokenizer.SDFARG {
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SDFCOMMAND || p.tokens[p.index].Kind == tokenizer.SDFARG {
 		// Dfile文
-		index, err = p.dockerFile(index)
+		err = p.dockerFile()
 		if err != nil {
-			return index, err
+			return err
 		}
-	} else if index + 1 < len(p.tokens) && p.tokens[index].Kind == tokenizer.SIDENTIFIER && p.tokens[index + 1].Kind == tokenizer.SLPAREN {
+	} else if p.index + 1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index + 1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
-		index, err = p.functionCall(index)
+		err = p.functionCall()
 		if err != nil {
-			return index, err
+			return err
 		}
-	} else if index + 1 < len(p.tokens) && p.tokens[index].Kind == tokenizer.SIDENTIFIER && p.tokens[index + 1].Kind == tokenizer.SDEFINE {
+	} else if p.index + 1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index + 1].Kind == tokenizer.SDEFINE {
 		// 変数定義文
-		index, err = p.defineVariable(index)
-	} else if index < len(p.tokens) && p.tokens[index].Kind == tokenizer.SIF {
+		err = p.defineVariable()
+	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIF {
 		// ifブロック
-		index, err = p.ifBlock(index)
+		err = p.ifBlock()
 		if err != nil {
-			return index, err
+			return err
 		}
 	} else {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
+		return errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
 	}
 
-	return index, nil
+	return nil
 }
 
 // Dfile文
-func (p *Parser) dockerFile(index int) (int, error) {
+func (p *Parser) dockerFile() error {
 	var err error
 	// Df命令
-	if index >= len(p.tokens) || (p.tokens[index].Kind != tokenizer.SDFCOMMAND && p.tokens[index].Kind != tokenizer.SDFARG) {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG) {
+		return errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
 	}
 
-	if p.tokens[index].Kind == tokenizer.SDFCOMMAND {
-		index++
+	if p.tokens[p.index].Kind == tokenizer.SDFCOMMAND {
+		p.index++
 	}
 
 
 	// Df引数部
-	index, err = p.dfArgs(index)
+	err = p.dfArgs()
 	if err != nil {
-		return index, err
+		return err
 	}
 
-	return index, nil
+	return nil
 }
 
 // Df引数部
-func (p *Parser) dfArgs(index int) (int, error) {
+func (p *Parser) dfArgs() error {
 	var err error
-	index, err = p.dfArg(index)
+	err = p.dfArg()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	for ;; {
-		if index < len(p.tokens) && (p.tokens[index].Kind == tokenizer.SDFARG || p.tokens[index].Kind == tokenizer.SASSIGNVARIABLE) {
-			index, err = p.dfArg(index)
+		if p.index < len(p.tokens) && (p.tokens[p.index].Kind == tokenizer.SDFARG || p.tokens[p.index].Kind == tokenizer.SASSIGNVARIABLE) {
+			err = p.dfArg()
 			if err != nil {
-				return index, err
+				return err
 			}
 		} else {
 			break
 		}
 	}
 
-	return index, nil
+	return nil
 }
 
 // Df引数
-func (p *Parser) dfArg(index int) (int, error) {
-	if index >= len(p.tokens) || (p.tokens[index].Kind != tokenizer.SDFARG && p.tokens[index].Kind != tokenizer.SASSIGNVARIABLE) {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find Df argument"))
+func (p *Parser) dfArg() error {
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SASSIGNVARIABLE) {
+		return errors.New(fmt.Sprintf("syntax error: cannot find Df argument"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 関数呼び出し文
-func (p *Parser) functionCall(index int) (int, error) {
+func (p *Parser) functionCall() error {
 	var err error
 
 	// 関数名
-	index, err = p.functionName(index)
+	err = p.functionName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "("
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
-	index++
+	p.index++
 
 	// 式の並び
-	if index < len(p.tokens) && (p.tokens[index].Kind == tokenizer.SSTRING || p.tokens[index].Kind == tokenizer.SIDENTIFIER) {
-		index, err = p.rowOfFormulas(index)
+	if p.index < len(p.tokens) && (p.tokens[p.index].Kind == tokenizer.SSTRING || p.tokens[p.index].Kind == tokenizer.SIDENTIFIER) {
+		err = p.rowOfFormulas()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
 	// ")"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 式の並び
-func (p *Parser) rowOfFormulas(index int) (int, error) {
+func (p *Parser) rowOfFormulas() error {
 	var err error
 	// 式
-	index, err = p.formula(index)
+	err = p.formula()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	for ;; {
 		// ","
-		if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SCOMMA {
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
-		index++
+		p.index++
 
 
 		// 式
-		index, err = p.formula(index)
+		err = p.formula()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
-	return index, nil
+	return nil
 }
 
 // ifブロック
-func (p *Parser) ifBlock(index int) (int, error) {
+func (p *Parser) ifBlock() error {
 	var err error
 
 	// "if"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SIF {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SIF {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
 	}
 
-	index++
+	p.index++
 
 	// "("
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
-	index++
+	p.index++
 
 	// 条件判定式
-	index, err = p.conditionalFormula(index)
+	err = p.conditionalFormula()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// ")"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SRPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
-	index++
+	p.index++
 
 	// "{"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SLBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 	
-	index++
+	p.index++
 
 	// 記述部
-	index, err = p.description(index)
+	err = p.description()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "}"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SRBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SRBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-	index++
+	p.index++
 
 	for ;; {
-		if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SELIF {
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SELIF {
 			break
 		}
 
 		// elif節
-		index, err = p.elifSection(index)
+		err = p.elifSection()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
-	if index < len(p.tokens) && p.tokens[index].Kind == tokenizer.SELSE {
-		index, err = p.elseSection(index)
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SELSE {
+		err = p.elseSection()
 		if err != nil {
-			return index, err
+			return err
 		}
 	}
 
-	return index, nil
+	return nil
 }
 
 // 条件判定式
-func (p *Parser) conditionalFormula(index int) (int, error) {
+func (p *Parser) conditionalFormula() error {
 	var err error
 	// 式
-	index, err = p.formula(index)
+	err = p.formula()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// 比較演算子
-	index, err = p.conditionalOperator(index)
+	err = p.conditionalOperator()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// 式
-	index, err = p.formula(index)
+	err = p.formula()
 	if err != nil {
-		return index, err
+		return err
 	}
 
-	return index, nil
+	return nil
 }
 
 // 式
-func (p *Parser) formula(index int) (int, error) {
+func (p *Parser) formula() error {
 	// 変数, 文字列
-	if index >= len(p.tokens) || (p.tokens[index].Kind != tokenizer.SIDENTIFIER && p.tokens[index].Kind != tokenizer.SSTRING) {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SIDENTIFIER && p.tokens[p.index].Kind != tokenizer.SSTRING) {
+		return errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 比較演算子
-func (p *Parser) conditionalOperator(index int) (int, error) {
+func (p *Parser) conditionalOperator() error {
 	// "==", "!="
-	if index >= len(p.tokens) || (p.tokens[index].Kind != tokenizer.SEQUAL && p.tokens[index].Kind != tokenizer.SNOTEQUAL) {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find conditional operator"))
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SEQUAL && p.tokens[p.index].Kind != tokenizer.SNOTEQUAL) {
+		return errors.New(fmt.Sprintf("syntax error: cannot find conditional operator"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 変数定義文
-func (p *Parser) defineVariable(index int) (int, error) {
+func (p *Parser) defineVariable() error {
 	var err error
 
 	// 変数名
-	index, err = p.variableName(index)
+	err = p.variableName()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// ":="
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SDEFINE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ':='"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SDEFINE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find ':='"))
 	}
 
-	index++
+	p.index++
 
 	// 文字列
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SSTRING {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find string"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SSTRING {
+		return errors.New(fmt.Sprintf("syntax error: cannot find string"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // elif節
-func (p *Parser) elifSection(index int) (int, error) {
+func (p *Parser) elifSection() error {
 	var err error
 
 	// "else if"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SELIF {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SELIF {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
 	}
 
-	index++
+	p.index++
 
 	// "("
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SLPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
-	index++
+	p.index++
 
 	// 条件判定式
-	index, err = p.conditionalFormula(index)
+	err = p.conditionalFormula()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// ")"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SRPAREN {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SRPAREN {
+		return errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
-	index++
+	p.index++
 
 	// "{"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SLBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 	
-	index++
+	p.index++
 
 	// 記述部
-	index, err = p.description(index)
+	err = p.description()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "}"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SRBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SRBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-	index++
+	p.index++
 	
-	return index, nil
+	return nil
 }
 
 // else節
-func (p *Parser) elseSection(index int) (int, error) {
+func (p *Parser) elseSection() error {
 	var err error
 
 	// "else"
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SELSE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find 'else'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SELSE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find 'else'"))
 	}
 
-	index++
+	p.index++
 
 	// "{"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SLBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 	
-	index++
+	p.index++
 
 	// 記述部
-	index, err = p.description(index)
+	err = p.description()
 	if err != nil {
-		return index, err
+		return err
 	}
 
 	// "}"
-	if index >= len(p.tokens) && p.tokens[index].Kind != tokenizer.SRBRACE {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SRBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
-	index++
+	p.index++
 	
-	return index, nil
+	return nil
 }
 
 // 関数名
-func (p *Parser) functionName(index int) (int, error) {
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SIDENTIFIER {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
+func (p *Parser) functionName() error {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIDENTIFIER {
+		return errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }
 
 // 変数名
-func (p *Parser) variableName(index int) (int, error) {
-	if index >= len(p.tokens) || p.tokens[index].Kind != tokenizer.SIDENTIFIER {
-		return index, errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
+func (p *Parser) variableName() error {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIDENTIFIER {
+		return errors.New(fmt.Sprintf("syntax error: cannot find an identifier"))
 	}
 
-	index++
+	p.index++
 
-	return index, nil
+	return nil
 }

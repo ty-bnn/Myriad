@@ -6,11 +6,12 @@ import (
 
 type Parser struct {
 	tokens []tokenizer.Token
+	index int
 }
 
-func (p *Parser)Parse(tokens []tokenizer.Token) (error) {
+func (p *Parser)Parse(tokens []tokenizer.Token) error {
 	p.tokens = tokens
-	err := p.program(0)
+	err := p.program()
 	if err != nil {
 		return err
 	}
