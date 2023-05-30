@@ -5,10 +5,12 @@ import (
 )
 
 type Compiler struct {
+	tokens []tokenizer.Token
 	FunctionInterCodeMap *map[string][]InterCode
 	FunctionVarMap *map[string][]Variable
 	functionPointer string
 	readFiles *[]string
+	index int
 }
 
 func (c *Compiler) Compile(tokens []tokenizer.Token) error {
