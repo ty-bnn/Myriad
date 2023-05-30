@@ -4,15 +4,11 @@ import (
 	"myriad/compiler"
 )
 
-var mainCodes []compiler.InterCode
-var argsInMain map[string]string
-var command string
-
 type Generator struct {
 	MainCodes *[]compiler.InterCode
 	argsInMain *map[string]string
 	command string
-	Codes *[]string
+	Codes []string
 }
 
 func (g *Generator) GenerateCode(fInterCodeMap *map[string][]compiler.InterCode, fArgMap *map[string][]compiler.Variable) error {
@@ -26,8 +22,7 @@ func (g *Generator) GenerateCode(fInterCodeMap *map[string][]compiler.InterCode,
 		return err
 	}
 
-	g.Codes = &[]string{}
-	*g.Codes = codes
+	g.Codes = codes
 
 	return nil
 }

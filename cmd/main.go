@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// ファイル出力
-	err = helpers.WriteFile(*g.Codes, os.Args[2])
+	err = helpers.WriteFile(g.Codes, os.Args[2])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

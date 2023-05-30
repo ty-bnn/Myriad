@@ -23,14 +23,14 @@ func (g *Generator) generateCodeBlock(index int) (int, []string, error) {
 				codes = append(codes, code)
 				index++
 			case compiler.COMMAND:
-				if command == "RUN" && (*g.MainCodes)[index].Content == "RUN" {
+				if g.command == "RUN" && (*g.MainCodes)[index].Content == "RUN" {
 					// RUN命令の結合
 					codes[len(codes) - 1] = codes[len(codes) - 1][:len(codes[len(codes) - 1]) - 1] + " \\\n"
 					code = "    "
 					index++
 				} else {
 					code = (*g.MainCodes)[index].Content
-					command = (*g.MainCodes)[index].Content
+					g.command = (*g.MainCodes)[index].Content
 				}
 				codes = append(codes, code)
 				index++
