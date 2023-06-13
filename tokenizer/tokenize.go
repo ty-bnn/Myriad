@@ -10,8 +10,7 @@ type Tokenizer struct {
 
 func (t *Tokenizer) Tokenize(lines []string) (error) {
 	fmt.Println("Tokenize...")
-	
-	var tokens []Token
+
 	var err error
 	var command string
 
@@ -71,7 +70,7 @@ func (t *Tokenizer) Tokenize(lines []string) (error) {
 					default:
 						i, newToken, err = readIdentifier(i, line, row)
 				}
-				tokens = append(tokens, newToken)
+				t.Tokens = append(t.Tokens, newToken)
 			} else {
 				// Dockerfileの引数
 				var newTokens []Token
@@ -79,7 +78,7 @@ func (t *Tokenizer) Tokenize(lines []string) (error) {
 
 				i, newTokens, err = readDfArgs(i, line, row)
 
-				if (0 <= len(tokens) - 1 && tokens[len(tokens) - 1].Kind == SDFCOMMAND) {
+				if (0 <= len(t.Tokens) - 1 && t.Tokens[len(t.Tokens) - 1].Kind == SDFCOMMAND) {
 					// 既登録のトークン列の末尾がDfコマンドの場合，スペースを一つ空ける
 					space = " "	
 				} else {
@@ -88,10 +87,10 @@ func (t *Tokenizer) Tokenize(lines []string) (error) {
 						space = space + " "
 					}
 				}
-				tokens = append(tokens, Token{Content: space, Kind: SDFARG})
+				t.Tokens = append(t.Tokens, Token{Content: space, Kind: SDFARG})
 
-				tokens = append(tokens, newTokens...)
-				tokens = append(tokens, Token{Content: "\n", Kind: SDFARG})
+				t.Tokens = append(t.Tokens, newTokens...)
+				t.Tokens = append(t.Tokens, Token{Content: "\n", Kind: SDFARG})
 				
 
 				if line[len(line) - 1] != '\\' {
@@ -106,8 +105,7 @@ func (t *Tokenizer) Tokenize(lines []string) (error) {
 	}
 
 	// for Debug.
-	printTokens(tokens)
+	printTokens(t.Tokens)
 
-	t.Tokens = tokens
 	return nil
 }
