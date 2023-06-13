@@ -53,7 +53,7 @@ func main() {
 
 	// コード生成
 	g := &generator.Generator{}
-	err = g.GenerateCode(c.FunctionInterCodeMap, c.FunctionVarMap)
+	err = g.GenerateCode(c.FunctionInterCodeMap)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

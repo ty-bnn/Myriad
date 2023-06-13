@@ -81,7 +81,7 @@ func (c *Compiler) fileName() error {
 		return nil
 	}
 
-	*c.readFiles = append(*c.readFiles, filePath)
+	c.readFiles = append(c.readFiles, filePath)
 
 	lines, err := helpers.ReadLinesFromFile(filePath)
 	if err != nil {
@@ -242,7 +242,7 @@ func (c *Compiler) variable(argIndex int) error {
 		c.index++
 	}
 
-	(*c.FunctionVarMap)[c.functionPointer] = append((*c.FunctionVarMap)[c.functionPointer], argument)
+	c.FunctionVarMap[c.functionPointer] = append(c.FunctionVarMap[c.functionPointer], argument)
 
 	return nil
 }
@@ -328,7 +328,7 @@ func (c *Compiler) dockerFile() error {
 	var err error
 	if c.tokens[c.index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Content: c.tokens[c.index].Content, Kind: COMMAND})
+		c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Content: c.tokens[c.index].Content, Kind: COMMAND})
 		c.index++
 	}
 
@@ -373,13 +373,13 @@ func (c *Compiler) dfArg() error {
 	} else if c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
 		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
-			code = InterCode{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: ROW}
+			code = InterCode{Content: c.FunctionVarMap[c.functionPointer][varIndex].Value, Kind: ROW}
 		} else {
 			code = InterCode{Content: content, Kind: VAR}
 		}
 	}
 	
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], code)
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], code)
 	c.index++
 
 	return nil
@@ -391,7 +391,7 @@ func (c *Compiler) functionCall() error {
 	functionCallName := c.tokens[c.index].Content
 
 	// 関数名
-	if _, ok := (*c.FunctionInterCodeMap)[functionCallName]; !ok {
+	if _, ok := c.FunctionInterCodeMap[functionCallName]; !ok {
 		return errors.New(fmt.Sprintf("semantic error: function %s is not defined 1 in line %d", c.tokens[c.index].Content, c.tokens[c.index].Line))
 	}
 
@@ -410,7 +410,7 @@ func (c *Compiler) functionCall() error {
 	}
 
 	var newCodes []InterCode
-	for _, code := range (*c.FunctionInterCodeMap)[functionCallName] {
+	for _, code := range c.FunctionInterCodeMap[functionCallName] {
 		var newCode InterCode
 		if code.Kind == VAR {
 			argIndex, isExist := c.getArgumentIndex(functionCallName, code.Content)
@@ -448,7 +448,7 @@ func (c *Compiler) functionCall() error {
 		newCodes = append(newCodes, newCode)
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], newCodes...)
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], newCodes...)
 
 	// ")"
 	c.index++
@@ -465,7 +465,7 @@ func (c *Compiler) rowOfFormulas() ([]Formula, error) {
 
 	var argNum int
 	// 定義された引数の個数を数える
-	for _, variable := range (*c.FunctionVarMap)[functionCallName] {
+	for _, variable := range c.FunctionVarMap[functionCallName] {
 		if variable.Kind != ARGUMENT {
 			break
 		}
@@ -517,8 +517,8 @@ func (c *Compiler) ifBlock() error {
 		return err
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: IF, IfContent: ifContent})
-	ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]) - 1)
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: IF, IfContent: ifContent})
+	ifIndexes = append(ifIndexes, len(c.FunctionInterCodeMap[c.functionPointer]) - 1)
 
 	// ")"
 	c.index++
@@ -532,7 +532,7 @@ func (c *Compiler) ifBlock() error {
 		return err
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -547,7 +547,7 @@ func (c *Compiler) ifBlock() error {
 		Note: if節の場合はIFのinterCodeを登録してからfunctionInteCodeMap[c.functionPointer]の長さを登録しているが、
 		      elifとelseの場合はinterCodeを登録する前に長さを登録する必要があるため、-1がいらない         
 		*/
-		ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
+		ifIndexes = append(ifIndexes, len(c.FunctionInterCodeMap[c.functionPointer]))
 		err = c.elifSection()
 		if err != nil {
 			return err
@@ -555,7 +555,7 @@ func (c *Compiler) ifBlock() error {
 	}
 
 	if c.tokens[c.index].Kind == tokenizer.SELSE {
-		ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
+		ifIndexes = append(ifIndexes, len(c.FunctionInterCodeMap[c.functionPointer]))
 		err = c.elseSection()
 		if err != nil {
 			return err
@@ -564,15 +564,15 @@ func (c *Compiler) ifBlock() error {
 
 	// ifブロックの最後までのオフセットを格納
 	for _, ifIndex := range ifIndexes {
-		(*c.FunctionInterCodeMap)[c.functionPointer][ifIndex].IfContent.EndOffset = len((*c.FunctionInterCodeMap)[c.functionPointer]) - 1 - ifIndex
-		fmt.Printf("EndOffset: %d\n", (*c.FunctionInterCodeMap)[c.functionPointer][ifIndex].IfContent.EndOffset)
+		c.FunctionInterCodeMap[c.functionPointer][ifIndex].IfContent.EndOffset = len(c.FunctionInterCodeMap[c.functionPointer]) - 1 - ifIndex
+		fmt.Printf("EndOffset: %d\n", c.FunctionInterCodeMap[c.functionPointer][ifIndex].IfContent.EndOffset)
 	}
 
 	// 次のif節（elif, else）までのオフセットを格納
-	ifIndexes = append(ifIndexes, len((*c.FunctionInterCodeMap)[c.functionPointer]))
+	ifIndexes = append(ifIndexes, len(c.FunctionInterCodeMap[c.functionPointer]))
 	for i := 0; i < len(ifIndexes) - 1; i++{
-		(*c.FunctionInterCodeMap)[c.functionPointer][ifIndexes[i]].IfContent.NextOffset = ifIndexes[i + 1] - ifIndexes[i] - 1
-		fmt.Printf("NextOffset: %d\n", (*c.FunctionInterCodeMap)[c.functionPointer][ifIndexes[i]].IfContent.NextOffset)
+		c.FunctionInterCodeMap[c.functionPointer][ifIndexes[i]].IfContent.NextOffset = ifIndexes[i + 1] - ifIndexes[i] - 1
+		fmt.Printf("NextOffset: %d\n", c.FunctionInterCodeMap[c.functionPointer][ifIndexes[i]].IfContent.NextOffset)
 	}
 
 	return nil
@@ -613,7 +613,7 @@ func (c *Compiler) formula() (Formula, error) {
 	if c.tokens[c.index].Kind == tokenizer.SIDENTIFIER {
 		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
-			formula = Formula{Content: (*c.FunctionVarMap)[c.functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
+			formula = Formula{Content: c.FunctionVarMap[c.functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
 		} else {
 			formula = Formula{Content: c.tokens[c.index].Content, Kind: tokenizer.SIDENTIFIER}
 		}
@@ -656,7 +656,7 @@ func (c *Compiler) elifSection() error {
 		return err
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ELIF, IfContent: ifContent})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: ELIF, IfContent: ifContent})
 
 	// ")"
 	c.index++
@@ -670,7 +670,7 @@ func (c *Compiler) elifSection() error {
 		return err
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -683,7 +683,7 @@ func (c *Compiler) elseSection() error {
 	var err error
 
 	// "else"
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ELSE})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: ELSE})
 	
 	c.index++
 
@@ -696,7 +696,7 @@ func (c *Compiler) elseSection() error {
 		return err
 	}
 
-	(*c.FunctionInterCodeMap)[c.functionPointer] = append((*c.FunctionInterCodeMap)[c.functionPointer], InterCode{Kind: ENDIF})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], InterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -725,9 +725,9 @@ func (c *Compiler) defineVariable() error {
 	newVariable := Variable{Name: name, Value: value, Kind: VARIABLE}
 	varIndex, isExist := c.getVariableIndex(c.functionPointer, name)
 	if isExist {
-		(*c.FunctionVarMap)[c.functionPointer][varIndex] = newVariable
+		c.FunctionVarMap[c.functionPointer][varIndex] = newVariable
 	} else {
-		(*c.FunctionVarMap)[c.functionPointer] = append((*c.FunctionVarMap)[c.functionPointer], newVariable)
+		c.FunctionVarMap[c.functionPointer] = append(c.FunctionVarMap[c.functionPointer], newVariable)
 	}
 
 	return nil

@@ -12,25 +12,25 @@ func (g *Generator) generateCodeBlock(index int) (int, []string, error) {
 	var codes []string
 	var err error
 	
-	for index < len(*g.MainCodes) {
+	for index < len(g.MainCodes) {
 		var code string
 		var codeBlock []string
 		// fmt.Println(index)
 
-		switch (*g.MainCodes)[index].Kind {
+		switch g.MainCodes[index].Kind {
 			case compiler.ROW:
-				code = (*g.MainCodes)[index].Content
+				code = g.MainCodes[index].Content
 				codes = append(codes, code)
 				index++
 			case compiler.COMMAND:
-				if g.command == "RUN" && (*g.MainCodes)[index].Content == "RUN" {
+				if g.command == "RUN" && g.MainCodes[index].Content == "RUN" {
 					// RUN命令の結合
 					codes[len(codes) - 1] = codes[len(codes) - 1][:len(codes[len(codes) - 1]) - 1] + " \\\n"
 					code = "    "
 					index++
 				} else {
-					code = (*g.MainCodes)[index].Content
-					g.command = (*g.MainCodes)[index].Content
+					code = g.MainCodes[index].Content
+					g.command = g.MainCodes[index].Content
 				}
 				codes = append(codes, code)
 				index++
@@ -68,7 +68,7 @@ func (g *Generator) generateIfBlock(index int) (int, []string, error) {
 
 	// elif節
 	for ;; {
-		if (*g.MainCodes)[index].Kind != compiler.ELIF {
+		if g.MainCodes[index].Kind != compiler.ELIF {
 			break
 		}
 
@@ -84,7 +84,7 @@ func (g *Generator) generateIfBlock(index int) (int, []string, error) {
 	}
 
 	// else節
-	if (*g.MainCodes)[index].Kind != compiler.ELSE {
+	if g.MainCodes[index].Kind != compiler.ELSE {
 		return index, codes, nil
 	}
 	
@@ -102,10 +102,10 @@ func (g *Generator) generateIfBlock(index int) (int, []string, error) {
 func (g *Generator) generateIf(index int) (int, []string, error) {
 	var codes []string
 
-	nextOffset := (*g.MainCodes)[index].IfContent.NextOffset
-	endOffset := (*g.MainCodes)[index].IfContent.EndOffset
+	nextOffset := g.MainCodes[index].IfContent.NextOffset
+	endOffset := g.MainCodes[index].IfContent.EndOffset
 
-	condition, err := getIfCondition((*g.MainCodes)[index].IfContent)
+	condition, err := getIfCondition(g.MainCodes[index].IfContent)
 	if err != nil {
 		return index, codes, err
 	}

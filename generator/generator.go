@@ -5,16 +5,13 @@ import (
 )
 
 type Generator struct {
-	MainCodes *[]compiler.InterCode
-	argsInMain *map[string]string
+	MainCodes []compiler.InterCode
 	command string
 	Codes []string
 }
 
-func (g *Generator) GenerateCode(fInterCodeMap *map[string][]compiler.InterCode, fArgMap *map[string][]compiler.Variable) error {
-	g.argsInMain = &map[string]string{}
-	g.MainCodes = &[]compiler.InterCode{}
-	*g.MainCodes = (*fInterCodeMap)["main"]
+func (g *Generator) GenerateCode(fInterCodeMap map[string][]compiler.InterCode) error {
+	g.MainCodes = fInterCodeMap["main"]
 	g.command = ""
 
 	_, codes, err := g.generateCodeBlock(0)

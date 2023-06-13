@@ -67,7 +67,7 @@ func (c Compiler) printInterCodes(functionName string) {
 	}
 
 	fmt.Printf("--------- inter codes in \"%s\"---------\n", functionName)
-	for i, code := range (*c.FunctionInterCodeMap)[functionName] {
+	for i, code := range c.FunctionInterCodeMap[functionName] {
 		fmt.Println("{")
 		fmt.Printf("  Content: %s\n", code.Content)
 		fmt.Printf("     Kind: %s\n", intToString[code.Kind])
