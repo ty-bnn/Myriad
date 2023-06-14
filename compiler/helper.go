@@ -221,14 +221,14 @@ func (c *Compiler) arguments() error {
 // 変数
 func (c *Compiler) variable(argIndex int) error {
 	var err error
-	var argument Variable
+	var argument SingleVariable
 
 	// 変数名
 	name := c.tokens[c.index].Content
 	if c.functionPointer == "main" {
-		argument = Variable{Name: name, Value:os.Args[argIndex + 3], Kind: ARGUMENT}
+		argument = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: ARGUMENT}, Value: os.Args[argIndex + 3]}
 	} else {
-		argument = Variable{Name: name, Kind: ARGUMENT}
+		argument = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: ARGUMENT}}
 	}
 
 	err = c.variableName()
@@ -373,7 +373,12 @@ func (c *Compiler) dfArg() error {
 	} else if c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
 		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
-			code = InterCode{Content: c.FunctionVarMap[c.functionPointer][varIndex].Value, Kind: ROW}
+			value, err := c.FunctionVarMap[c.functionPointer][varIndex].getValue(0)
+			if err != nil {
+				return err
+			}
+
+			code = InterCode{Content: value, Kind: ROW}
 		} else {
 			code = InterCode{Content: content, Kind: VAR}
 		}
@@ -466,7 +471,7 @@ func (c *Compiler) rowOfFormulas() ([]Formula, error) {
 	var argNum int
 	// 定義された引数の個数を数える
 	for _, variable := range c.FunctionVarMap[functionCallName] {
-		if variable.Kind != ARGUMENT {
+		if variable.getKind() != ARGUMENT {
 			break
 		}
 
@@ -613,7 +618,11 @@ func (c *Compiler) formula() (Formula, error) {
 	if c.tokens[c.index].Kind == tokenizer.SIDENTIFIER {
 		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
 		if isExist {
-			formula = Formula{Content: c.FunctionVarMap[c.functionPointer][varIndex].Value, Kind: tokenizer.SSTRING}
+			value, err := c.FunctionVarMap[c.functionPointer][varIndex].getValue(0)
+			if err != nil {
+				return Formula{}, err
+			}
+			formula = Formula{Content: value, Kind: tokenizer.SSTRING}
 		} else {
 			formula = Formula{Content: c.tokens[c.index].Content, Kind: tokenizer.SIDENTIFIER}
 		}
@@ -718,19 +727,72 @@ func (c *Compiler) defineVariable() error {
 	// ":="
 	c.index++
 
-	// 文字列
-	value := c.tokens[c.index].Content
-	c.index++
+	var newVariable Variable
+	if c.tokens[c.index].Kind == tokenizer.SSTRING {
+		// 文字列
+		value := c.tokens[c.index].Content
+		c.index++
+		newVariable = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: VARIABLE}, Value: value}
+	} else if c.tokens[c.index].Kind == tokenizer.SLBRACE {
+		// 配列
+		values, err := c.array()
+		if err != nil {
+			return err
+		}
+		newVariable = MultiVariable{VariableDetail: VariableDetail{Name: name, Kind: VARIABLE}, Values: values}
+	}
 
-	newVariable := Variable{Name: name, Value: value, Kind: VARIABLE}
 	varIndex, isExist := c.getVariableIndex(c.functionPointer, name)
 	if isExist {
+		// 変数を書き換える, 後に定義された値を使用する
 		c.FunctionVarMap[c.functionPointer][varIndex] = newVariable
 	} else {
+		// 新しく変数を登録する
 		c.FunctionVarMap[c.functionPointer] = append(c.FunctionVarMap[c.functionPointer], newVariable)
 	}
 
 	return nil
+}
+
+// 配列
+func (c *Compiler) array() ([]string, error) {
+	// {
+	c.index++
+	
+	// 文字列の並び
+	values, err := c.rowOfStrings()
+	if err != nil {
+		return nil, err
+	}
+
+	// }
+	c.index++
+
+	return values, nil
+}
+
+// 文字列の並び
+func (c *Compiler) rowOfStrings() ([]string, error) {
+	var strings []string
+	// 文字列
+	strings = append(strings, c.tokens[c.index].Content)
+	c.index++
+
+	for ;; {
+		// ","
+		if c.tokens[c.index].Kind != tokenizer.SCOMMA {
+			break
+		}
+
+		c.index++
+
+
+		// 文字列
+		strings = append(strings, c.tokens[c.index].Content)
+		c.index++
+	}
+
+	return strings, nil
 }
 
 // 関数名

@@ -10,9 +10,13 @@ func (c Compiler) isCompiled(file string) bool {
 	return false
 }
 
+/*
+mainに入っている場合は引数（ARGUMENT）でも通常の変数として扱う
+Why: 予めコンパイル時に引数として与えられるため既に値がわかっているから
+*/
 func (c Compiler) getVariableIndex(functionName string, variableName string) (int, bool) {
 	for i, variable := range c.FunctionVarMap[functionName] {
-		if variable.Name == variableName && (functionName == "main" || variable.Kind == VARIABLE) {
+		if variable.getName() == variableName && (functionName == "main" || variable.getKind() == VARIABLE) {
 			return i, true
 		}
 	}
@@ -22,7 +26,7 @@ func (c Compiler) getVariableIndex(functionName string, variableName string) (in
 
 func (c Compiler) getArgumentIndex(functionName string, argumentName string) (int, bool) {
 	for i, argument := range c.FunctionVarMap[functionName] {
-		if argument.Name == argumentName && functionName != "main" && argument.Kind == ARGUMENT {
+		if argument.getName() == argumentName && functionName != "main" && argument.getKind() == ARGUMENT {
 			return i, true
 		}
 	}
