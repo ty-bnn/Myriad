@@ -556,11 +556,72 @@ func (p *Parser) defineVariable() error {
 	p.index++
 
 	// 文字列
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SSTRING {
+		p.index++
+	// 配列
+	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SLBRACE {
+		err = p.array()
+		if err != nil {
+			return err
+		}
+	} else {
+		return errors.New(fmt.Sprintf("syntax error: cannot find string or '{'"))
+	}
+
+	return nil
+}
+
+// 配列
+func (p *Parser) array() error {
+	var err error
+
+	// {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+
+	p.index++
+
+	err = p.rowOfStrings()
+	if err != nil {
+		return err
+	}
+
+	// }
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRBRACE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	p.index++
+
+	return nil
+}
+
+// 文字列の並び
+func (p *Parser) rowOfStrings() error {
+	// 文字列
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SSTRING {
 		return errors.New(fmt.Sprintf("syntax error: cannot find string"))
 	}
 
 	p.index++
+
+	for ;; {
+		// ","
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
+			break
+		}
+
+		p.index++
+
+
+		// 文字列
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SSTRING {
+			return errors.New(fmt.Sprintf("syntax error: cannot find string"))
+		}
+
+		p.index++
+	}
 
 	return nil
 }

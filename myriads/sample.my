@@ -1,22 +1,7 @@
-abc(package) {
-    if (package == "helo") {
-        RUN aaa
-    } else if (package == "hel") {
-        RUN {{package}}
-    } else {
-        if (package == "hel") {
-            RUN bbb
-        } else if (package == "he"){
-            RUN ccc
-        }
-    }
-}
-
-main()
-{
+main() {
     version := "1.1.1"
+    packages := {"abc", "def", "ghi"}
     FROM {{version}}
-    abc("hello")
     RUN good \
         {{version}} \
         morning
