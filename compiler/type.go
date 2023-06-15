@@ -11,8 +11,8 @@ import (
 type InterCode struct {
 	Content string
 	Kind CodeKind
-	ArgValues []string // for 関数呼び出し
-	IfContent IfContent // for if文
+	ArgValues []string // 関数呼び出し
+	IfContent IfContent // if文
 }
 
 type CodeKind int
