@@ -303,7 +303,7 @@ func (p *Parser) descriptionBlock() error {
 func (p *Parser) dockerFile() error {
 	var err error
 	// Df命令
-	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG) {
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SLDOUBLEBRA ) {
 		return errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
 	}
 
@@ -330,7 +330,7 @@ func (p *Parser) dfArgs() error {
 	}
 
 	for ;; {
-		if p.index < len(p.tokens) && (p.tokens[p.index].Kind == tokenizer.SDFARG || p.tokens[p.index].Kind == tokenizer.SASSIGNVARIABLE) {
+		if p.index < len(p.tokens) && (p.tokens[p.index].Kind == tokenizer.SDFARG || p.tokens[p.index].Kind == tokenizer.SLDOUBLEBRA) {
 			err = p.dfArg()
 			if err != nil {
 				return err
@@ -345,8 +345,41 @@ func (p *Parser) dfArgs() error {
 
 // Df引数
 func (p *Parser) dfArg() error {
-	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SASSIGNVARIABLE) {
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SDFARG {
+		// 生のDf引数
+		p.index++
+	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SLDOUBLEBRA {
+		//置換式
+		err := p.replaceFormula()
+		if err != nil {
+			return err
+		}
+	} else {
 		return errors.New(fmt.Sprintf("syntax error: cannot find Df argument"))
+	}
+
+	return nil
+}
+
+// 置換式
+func (p *Parser) replaceFormula() error {
+	// {{
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLDOUBLEBRA {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+	
+	p.index++
+
+	// 置換変数
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SASSIGNVARIABLE {
+		return errors.New(fmt.Sprintf("syntax error: cannot find assign variable"))
+	}
+
+	p.index++
+
+	// }}
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRDOUBLEBRA {
+		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
 	p.index++

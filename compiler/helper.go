@@ -350,7 +350,7 @@ func (c *Compiler) dfArgs() error {
 	}
 
 	for ;; {
-		if c.tokens[c.index].Kind == tokenizer.SDFARG || c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
+		if c.tokens[c.index].Kind == tokenizer.SDFARG || c.tokens[c.index].Kind == tokenizer.SLDOUBLEBRA {
 			err = c.dfArg()
 			if err != nil {
 				return err
@@ -365,26 +365,46 @@ func (c *Compiler) dfArgs() error {
 
 // Df引数
 func (c *Compiler) dfArg() error {
-	content := c.tokens[c.index].Content
-
-	var code InterCode
+	// 生のDF引数
 	if c.tokens[c.index].Kind == tokenizer.SDFARG {
-		code = InterCode{Content: content, Kind: ROW}
-	} else if c.tokens[c.index].Kind == tokenizer.SASSIGNVARIABLE {
-		varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
-		if isExist {
-			value, err := c.FunctionVarMap[c.functionPointer][varIndex].getValue(0)
-			if err != nil {
-				return err
-			}
-
-			code = InterCode{Content: value, Kind: ROW}
-		} else {
-			code = InterCode{Content: content, Kind: VAR}
+		code := InterCode{Content: c.tokens[c.index].Content, Kind: ROW}
+		c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], code)
+		c.index++
+	// 置換式
+	} else if c.tokens[c.index].Kind == tokenizer.SLDOUBLEBRA {
+		err := c.replaceFormula()
+		if err != nil {
+			return err
 		}
 	}
-	
+
+	return nil
+}
+
+// 置換式
+func (c *Compiler) replaceFormula() error {
+	// {{
+	c.index++
+
+	// 置換変数
+	varIndex, isExist := c.getVariableIndex(c.functionPointer, c.tokens[c.index].Content)
+
+	var code InterCode
+	if isExist {
+		value, err := c.FunctionVarMap[c.functionPointer][varIndex].getValue(0)
+		if err != nil {
+			return err
+		}
+
+		code = InterCode{Content: value, Kind: ROW}
+	} else {
+		code = InterCode{Content: c.tokens[c.index].Content, Kind: VAR}
+	}
+
 	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], code)
+	c.index++
+
+	// }}
 	c.index++
 
 	return nil

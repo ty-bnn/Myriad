@@ -104,6 +104,7 @@ func (t *Tokenizer) Tokenize(lines []string) (error) {
 		}
 	}
 
+	fmt.Println("Tokenize Done.")
 	// for Debug.
 	printTokens(t.Tokens)
 

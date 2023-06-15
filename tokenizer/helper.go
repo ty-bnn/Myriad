@@ -93,22 +93,25 @@ func readDfCommands(index int, line string, row int) (int, Token, error) {
 	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row))
 }
 
-func readDfArg(index int, line string, row int) (int, Token, error) {
+func readDfArg(index int, line string, row int) (int, []Token, error) {
+	var tokens []Token
 	start := index
 
 	if index + 2 < len(line) && line[index : index + 2] == "{{" {
+		// {{
+		tokens = append(tokens, Token{Content: "{{", Kind: SLDOUBLEBRA, Line: row + 1})
 		index += 2
 		for index < len(line) - 1 {
 			if line[index : index + 2] == "}}" {
-				break
+				tokens = append(tokens, Token{Content: line[start + 2: index], Kind: SASSIGNVARIABLE, Line: row + 1})
+				tokens = append(tokens, Token{Content: "}}", Kind: SRDOUBLEBRA, Line: row + 1})
+				index = index + 2
+				return index, tokens, nil
 			}
 			index++
 		}
-		if index != len(line) {
-			return index + 2, Token{Content: line[start + 2: index], Kind: SASSIGNVARIABLE, Line: row + 1}, nil
-		} else {
-			return index, Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
-		}
+
+		return index, []Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
 	} else {
 		for index < len(line) - 1 {
 			if line[index : index + 2] == "{{" {
@@ -116,17 +119,18 @@ func readDfArg(index int, line string, row int) (int, Token, error) {
 			}
 			index++
 		}
+
 		if index == len(line) - 1 {
-			return len(line), Token{Content: line[start : len(line)], Kind: SDFARG, Line: row + 1}, nil
+			return len(line), []Token{Token{Content: line[start : len(line)], Kind: SDFARG, Line: row + 1}}, nil
 		} else {
-			return index, Token{Content: line[start : index], Kind: SDFARG, Line: row + 1}, nil
+			return index, []Token{Token{Content: line[start : index], Kind: SDFARG, Line: row + 1}}, nil
 		}
 	}
 }
 
 func readDfArgs(index int, line string, row int) (int, []Token, error) {
 	var tokens []Token
-	var token Token
+	var newToken []Token
 	var err error
 
 	for line[index] == ' ' {
@@ -135,12 +139,12 @@ func readDfArgs(index int, line string, row int) (int, []Token, error) {
 	
 	for index < len(line) {
 
-		index, token, err = readDfArg(index, line, row)
+		index, newToken, err = readDfArg(index, line, row)
 		if err != nil {
 			return index, tokens, err
 		}
 
-		tokens = append(tokens, token)
+		tokens = append(tokens, newToken...)
 	}
 
 	return index, tokens, nil

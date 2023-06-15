@@ -21,6 +21,8 @@ const (
 	SDEFINE
 	SEQUAL
 	SNOTEQUAL
+	SLDOUBLEBRA
+	SRDOUBLEBRA
 	SSTRING
 	SDFCOMMAND
 	SDFARG
@@ -51,6 +53,8 @@ func printTokens(tokens []Token) {
 		SDEFINE: ":=",
 		SEQUAL: "=",
 		SNOTEQUAL: "!=",
+		SLDOUBLEBRA: "{{",
+		SRDOUBLEBRA: "}}",
 		SSTRING: "string",
 		SDFCOMMAND: "DfCommand",
 		SDFARG: "DfArg",

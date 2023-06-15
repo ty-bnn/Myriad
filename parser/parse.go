@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+	
 	"myriad/tokenizer"
 )
 
@@ -10,11 +12,13 @@ type Parser struct {
 }
 
 func (p *Parser)Parse(tokens []tokenizer.Token) error {
+	fmt.Println("Parse...")
 	p.tokens = tokens
 	err := p.program()
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("Parse Done.")
 	return nil
 }
