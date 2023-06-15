@@ -95,7 +95,6 @@ func readDfCommands(index int, line string, row int) (int, Token, error) {
 
 func readDfArg(index int, line string, row int) (int, []Token, error) {
 	var tokens []Token
-	start := index
 
 	if index + 2 < len(line) && line[index : index + 2] == "{{" {
 		// {{
@@ -103,16 +102,42 @@ func readDfArg(index int, line string, row int) (int, []Token, error) {
 		index += 2
 		for index < len(line) - 1 {
 			if line[index : index + 2] == "}}" {
-				tokens = append(tokens, Token{Content: line[start + 2: index], Kind: SASSIGNVARIABLE, Line: row + 1})
 				tokens = append(tokens, Token{Content: "}}", Kind: SRDOUBLEBRA, Line: row + 1})
 				index = index + 2
 				return index, tokens, nil
+			} else if line[index] == '[' { 
+				tokens = append(tokens, Token{Content: "[", Kind: SLBRACKET, Line: row + 1})
+				index++
+			} else if line[index] == ']' {
+				tokens = append(tokens, Token{Content: "]", Kind: SRBRACKET, Line: row + 1})
+				index++
+			} else if '1' <= line[index] && line[index] <= '9' {
+				start := index
+				for index < len(line) - 1 {
+					if line[index] < '0' || '9' < line[index] {
+						break
+					}
+
+					index++
+				}
+				tokens = append(tokens, Token{Content: line[start : index], Kind: SNUMBER, Line: row + 1})
+			} else if ('A' <= line[index] && line[index] <= 'Z') || ('a' <= line[index] && line[index] <= 'z') {
+				start := index
+				for index < len(line) - 1 {
+					if line[index] < 'A' || ('Z' < line[index] && line[index] < 'a') || 'z' < line[index] {
+						break
+					}
+
+					index++
+				}
+				// TODO: SIDENTIFIERとして扱う
+				tokens = append(tokens, Token{Content: line[start : index], Kind: SASSIGNVARIABLE, Line: row + 1})
 			}
-			index++
 		}
 
 		return index, []Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
 	} else {
+		start := index
 		for index < len(line) - 1 {
 			if line[index : index + 2] == "{{" {
 				break

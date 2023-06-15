@@ -18,6 +18,8 @@ const (
 	SARRANGE
 	SLBRACE
 	SRBRACE
+	SLBRACKET
+	SRBRACKET
 	SDEFINE
 	SEQUAL
 	SNOTEQUAL
@@ -28,6 +30,7 @@ const (
 	SDFARG
 	SIDENTIFIER
 	SASSIGNVARIABLE
+	SNUMBER
 )
 
 type Token struct {
@@ -50,6 +53,8 @@ func printTokens(tokens []Token) {
 		SARRANGE: "[]",
 		SLBRACE: "{",
 		SRBRACE: "}",
+		SLBRACKET: "[",
+		SRBRACKET: "]",
 		SDEFINE: ":=",
 		SEQUAL: "=",
 		SNOTEQUAL: "!=",
@@ -60,6 +65,7 @@ func printTokens(tokens []Token) {
 		SDFARG: "DfArg",
 		SIDENTIFIER: "identifier",
 		SASSIGNVARIABLE: "assignvariable",
+		SNUMBER: "number",
 	}
 
 	fmt.Println("--------- tokens ---------")
