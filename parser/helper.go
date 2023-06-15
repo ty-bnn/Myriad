@@ -377,6 +377,26 @@ func (p *Parser) replaceFormula() error {
 
 	p.index++
 
+	// 配列要素
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SLBRACKET {
+		// [
+		p.index++
+
+		// 数字
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SNUMBER {
+			return errors.New(fmt.Sprintf("syntax error: cannot find array index"))
+		}
+
+		p.index++
+
+		// ]
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRBRACKET {
+			return errors.New(fmt.Sprintf("syntax error: cannot find ']'"))
+		}
+
+		p.index++
+	}
+
 	// }}
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SRDOUBLEBRA {
 		return errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
