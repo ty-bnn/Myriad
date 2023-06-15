@@ -226,9 +226,9 @@ func (c *Compiler) variable(argIndex int) error {
 	// 変数名
 	name := c.tokens[c.index].Content
 	if c.functionPointer == "main" {
-		argument = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: ARGUMENT}, Value: os.Args[argIndex + 3]}
+		argument = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: ARGUMENT}, Value: os.Args[argIndex + 3]}
 	} else {
-		argument = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: ARGUMENT}}
+		argument = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: ARGUMENT}}
 	}
 
 	err = c.variableName()
@@ -752,14 +752,14 @@ func (c *Compiler) defineVariable() error {
 		// 文字列
 		value := c.tokens[c.index].Content
 		c.index++
-		newVariable = SingleVariable{VariableDetail: VariableDetail{Name: name, Kind: VARIABLE}, Value: value}
+		newVariable = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: VARIABLE}, Value: value}
 	} else if c.tokens[c.index].Kind == tokenizer.SLBRACE {
 		// 配列
 		values, err := c.array()
 		if err != nil {
 			return err
 		}
-		newVariable = MultiVariable{VariableDetail: VariableDetail{Name: name, Kind: VARIABLE}, Values: values}
+		newVariable = MultiVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: VARIABLE}, Values: values}
 	}
 
 	varIndex, isExist := c.getVariableIndex(c.functionPointer, name)

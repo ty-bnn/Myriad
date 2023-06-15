@@ -63,13 +63,13 @@ const (
 	ARGUMENT
 )
 
-type VariableDetail struct {
+type VariableCommonDetail struct {
 	Name string
 	Kind VariableKind
 }
 
 type SingleVariable struct {
-	VariableDetail
+	VariableCommonDetail
 	Value string
 }
 
@@ -90,7 +90,7 @@ func (s SingleVariable) getKind() VariableKind {
 }
 
 type MultiVariable struct {
-	VariableDetail
+	VariableCommonDetail
 	Values []string
 }
 
