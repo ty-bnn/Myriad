@@ -8,16 +8,13 @@ import (
 )
 
 // 中間言語
-type InterCode struct {
-	Content string
-	Kind CodeKind
-	ArgValues []string // 関数呼び出し
-	IfContent IfContent // if文
+type IntefCode interface {
+	getName() string
 }
 
-type CodeKind int
+type InterCodeKind int
 const (
-	ROW CodeKind = iota
+	ROW InterCodeKind = iota
 	COMMAND
 	VAR
 	IF
@@ -26,16 +23,14 @@ const (
 	ENDIF
 )
 
-type IfContent struct {
-	LFormula, RFormula Formula
-	Operator OperaterKind
-	NextOffset int
-	EndOffset int
+type InterCodeCommonDetail struct {
+	Content string
+	Kind InterCodeKind
 }
 
-type Formula struct {
-	Content string
-	Kind tokenizer.TokenKind
+// ROW, COMMAND, VAR, ELSE, ENDIF
+type NormalInterCode struct {
+	InterCodeCommonDetail
 }
 
 type OperaterKind int
@@ -43,6 +38,24 @@ const (
 	EQUAL OperaterKind = iota
 	NOTEQUAL
 )
+
+type Formula struct {
+	Content string
+	Kind tokenizer.TokenKind
+}
+
+type IfContent struct {
+	LFormula, RFormula Formula
+	Operator OperaterKind
+	NextOffset int
+	EndOffset int
+}
+
+// IF, ELIF
+type IfInterCode struct {
+	InterCodeCommonDetail
+	IfContent
+}
 
 // TODO: データ構造再考
 /*
@@ -68,6 +81,7 @@ type VariableCommonDetail struct {
 	Kind VariableKind
 }
 
+// 単一変数用のインタフェース実装
 type SingleVariable struct {
 	VariableCommonDetail
 	Value string
@@ -89,6 +103,7 @@ func (s SingleVariable) getKind() VariableKind {
 	return s.Kind
 }
 
+// 配列型変数用のインタフェース実装
 type MultiVariable struct {
 	VariableCommonDetail
 	Values []string
@@ -111,7 +126,7 @@ func (m MultiVariable) getKind() VariableKind {
 }
 
 func (c Compiler) printInterCodes(functionName string) {
-	intToString := map[CodeKind]string{
+	intToString := map[InterCodeKind]string{
 		ROW: "row",
 		COMMAND: "command",
 		VAR: "var",
