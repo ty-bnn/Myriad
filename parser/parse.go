@@ -2,17 +2,17 @@ package parser
 
 import (
 	"fmt"
-	
+
 	"myriad/tokenizer"
 )
 
 type Parser struct {
 	tokens []tokenizer.Token
-	index int
+	index  int
 }
 
-func (p *Parser)Parse(tokens []tokenizer.Token) error {
-	fmt.Println("Parse...")
+func (p *Parser) Parse(tokens []tokenizer.Token) error {
+	fmt.Println("Parseing...")
 	p.tokens = tokens
 	err := p.program()
 	if err != nil {

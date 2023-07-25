@@ -1,13 +1,13 @@
 package tokenizer
 
-import(
-	"fmt"
+import (
 	"errors"
+	"fmt"
 	. "strings"
 )
 
 func isAlphabetOrNumber(line string, index int) bool {
-	if (len(line) <= index || (line[index] < '0' || ('9' < line[index] && line[index] < 'A') || ('Z' < line[index] && line[index] < 'a') || ('z' < line[index]))) {
+	if len(line) <= index || (line[index] < '0' || ('9' < line[index] && line[index] < 'A') || ('Z' < line[index] && line[index] < 'a') || ('z' < line[index])) {
 		return false
 	}
 
@@ -15,41 +15,41 @@ func isAlphabetOrNumber(line string, index int) bool {
 }
 
 func readReservedWords(index int, line string, row int) (int, Token, error) {
-	if (index + 6 <= len(line) && line[index : index + 6] == "import" && !isAlphabetOrNumber(line, index + 6)) {
+	if index+6 <= len(line) && line[index:index+6] == "import" && !isAlphabetOrNumber(line, index+6) {
 		return index + 6, Token{Content: "import", Kind: SIMPORT, Line: row + 1}, nil
-	} else if (index + 4 <= len(line) && line[index : index + 4] == "from" && !isAlphabetOrNumber(line, index + 4)) {
+	} else if index+4 <= len(line) && line[index:index+4] == "from" && !isAlphabetOrNumber(line, index+4) {
 		return index + 4, Token{Content: "from", Kind: SFROM, Line: row + 1}, nil
-	} else if (index + 4 <= len(line) && line[index : index + 4] == "main" && !isAlphabetOrNumber(line, index + 4)) {
+	} else if index+4 <= len(line) && line[index:index+4] == "main" && !isAlphabetOrNumber(line, index+4) {
 		return index + 4, Token{Content: "main", Kind: SMAIN, Line: row + 1}, nil
-	} else if (index + 2 <= len(line) && line[index : index + 2] == "if" && !isAlphabetOrNumber(line, index + 2)) {
+	} else if index+2 <= len(line) && line[index:index+2] == "if" && !isAlphabetOrNumber(line, index+2) {
 		return index + 2, Token{Content: "if", Kind: SIF, Line: row + 1}, nil
-	} else if (index + 7 <= len(line) && line[index : index + 7] == "else if" && !isAlphabetOrNumber(line, index + 7)) {
+	} else if index+7 <= len(line) && line[index:index+7] == "else if" && !isAlphabetOrNumber(line, index+7) {
 		return index + 7, Token{Content: "else if", Kind: SELIF, Line: row + 1}, nil
-	} else if (index + 4 <= len(line) && line[index : index + 4] == "else" && !isAlphabetOrNumber(line, index + 4)) {
+	} else if index+4 <= len(line) && line[index:index+4] == "else" && !isAlphabetOrNumber(line, index+4) {
 		return index + 4, Token{Content: "else", Kind: SELSE, Line: row + 1}, nil
 	}
 
-	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row)) 
+	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row))
 }
 
 func readSymbols(index int, line string, row int) (int, Token, error) {
-	if (line[index] == '(') {
+	if line[index] == '(' {
 		return index + 1, Token{Content: "(", Kind: SLPAREN, Line: row + 1}, nil
-	} else if (line[index] == ')') {
+	} else if line[index] == ')' {
 		return index + 1, Token{Content: ")", Kind: SRPAREN, Line: row + 1}, nil
-	} else if (line[index] == ',') {
+	} else if line[index] == ',' {
 		return index + 1, Token{Content: ",", Kind: SCOMMA, Line: row + 1}, nil
-	} else if (index + 2 <= len(line) && line[index : index + 2] == "[]") {
+	} else if index+2 <= len(line) && line[index:index+2] == "[]" {
 		return index + 2, Token{Content: "[]", Kind: SARRANGE, Line: row + 1}, nil
-	} else if (line[index] == '{') {
+	} else if line[index] == '{' {
 		return index + 1, Token{Content: "{", Kind: SLBRACE, Line: row + 1}, nil
-	} else if (line[index] == '}') {
+	} else if line[index] == '}' {
 		return index + 1, Token{Content: "}", Kind: SRBRACE, Line: row + 1}, nil
-	} else if (index + 2 <= len(line) && line[index : index + 2] == "==") {
+	} else if index+2 <= len(line) && line[index:index+2] == "==" {
 		return index + 2, Token{Content: "==", Kind: SEQUAL, Line: row + 1}, nil
-	} else if (index + 2 <= len(line) && line[index : index + 2] == "!=") {
+	} else if index+2 <= len(line) && line[index:index+2] == "!=" {
 		return index + 2, Token{Content: "!=", Kind: SNOTEQUAL, Line: row + 1}, nil
-	} else if (index + 2 <= len(line) && line[index : index + 2] == ":=") {
+	} else if index+2 <= len(line) && line[index:index+2] == ":=" {
 		return index + 2, Token{Content: ":=", Kind: SDEFINE, Line: row + 1}, nil
 	}
 
@@ -58,36 +58,36 @@ func readSymbols(index int, line string, row int) (int, Token, error) {
 
 func readDfCommands(index int, line string, row int) (int, Token, error) {
 	/*
-	ADD, ARG, CMD, COPY, ENTRYPOINT, ENV, EXPOSE, FROM,
-	HEALTHCHECK, LABEL, MAINTAINER, ONBUILD, RUN, SHELL,
-	STOPSIGNAL, USER, VOLUME, WORKDIR
+		ADD, ARG, CMD, COPY, ENTRYPOINT, ENV, EXPOSE, FROM,
+		HEALTHCHECK, LABEL, MAINTAINER, ONBUILD, RUN, SHELL,
+		STOPSIGNAL, USER, VOLUME, WORKDIR
 	*/
 	if HasPrefix(line[index:], "ADD") || HasPrefix(line[index:], "ARG") || HasPrefix(line[index:], "CMD") || HasPrefix(line[index:], "ENV") || HasPrefix(line[index:], "RUN") {
-			return index + 3, Token{Content: line[index : index + 3], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 3, Token{Content: line[index : index+3], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "COPY") || HasPrefix(line[index:], "FROM") || HasPrefix(line[index:], "USER") {
-		return index + 4, Token{Content: line[index : index + 4], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 4, Token{Content: line[index : index+4], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "LABEL") || HasPrefix(line[index:], "SHELL") {
-		return index + 5, Token{Content: line[index : index + 5], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 5, Token{Content: line[index : index+5], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "") || HasPrefix(line[index:], "") {
-		return index + 6, Token{Content: line[index : index + 6], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 6, Token{Content: line[index : index+6], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "ONBUILD") || HasPrefix(line[index:], "WORKDIR") {
-		return index + 7, Token{Content: line[index : index + 7], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 7, Token{Content: line[index : index+7], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "ENTRYPOINT") || HasPrefix(line[index:], "MAINTAINER") || HasPrefix(line[index:], "STOPSIGNAL") {
-		return index + 10, Token{Content: line[index : index + 10], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 10, Token{Content: line[index : index+10], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	if HasPrefix(line[index:], "HEALTHCHECK") {
-		return index + 11, Token{Content: line[index : index + 10], Kind: SDFCOMMAND, Line: row + 1}, nil
+		return index + 11, Token{Content: line[index : index+10], Kind: SDFCOMMAND, Line: row + 1}, nil
 	}
 
 	return index, Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row))
@@ -96,34 +96,43 @@ func readDfCommands(index int, line string, row int) (int, Token, error) {
 func readDfArg(index int, line string, row int) (int, []Token, error) {
 	var tokens []Token
 
-	if index + 2 < len(line) && line[index : index + 2] == "{{" {
+	if index+2 < len(line) && line[index:index+2] == "{{" {
 		// {{
 		tokens = append(tokens, Token{Content: "{{", Kind: SLDOUBLEBRA, Line: row + 1})
 		index += 2
-		for index < len(line) - 1 {
-			if line[index : index + 2] == "}}" {
+		for index < len(line)-1 {
+			if line[index:index+2] == "}}" {
 				tokens = append(tokens, Token{Content: "}}", Kind: SRDOUBLEBRA, Line: row + 1})
 				index = index + 2
 				return index, tokens, nil
-			} else if line[index] == '[' { 
+			} else if line[index] == '[' {
 				tokens = append(tokens, Token{Content: "[", Kind: SLBRACKET, Line: row + 1})
 				index++
 			} else if line[index] == ']' {
 				tokens = append(tokens, Token{Content: "]", Kind: SRBRACKET, Line: row + 1})
 				index++
-			} else if '1' <= line[index] && line[index] <= '9' {
+			} else if '0' <= line[index] && line[index] <= '9' {
+				if line[index] == '0' {
+					if index+1 < len(line)-1 && ('1' <= line[index+1] && line[index+1] <= '9') {
+						return index, []Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
+					}
+					tokens = append(tokens, Token{Content: "0", Kind: SNUMBER, Line: row + 1})
+					index++
+					continue
+				}
+
 				start := index
-				for index < len(line) - 1 {
+				for index < len(line)-1 {
 					if line[index] < '0' || '9' < line[index] {
 						break
 					}
 
 					index++
 				}
-				tokens = append(tokens, Token{Content: line[start : index], Kind: SNUMBER, Line: row + 1})
+				tokens = append(tokens, Token{Content: line[start:index], Kind: SNUMBER, Line: row + 1})
 			} else if ('A' <= line[index] && line[index] <= 'Z') || ('a' <= line[index] && line[index] <= 'z') {
 				start := index
-				for index < len(line) - 1 {
+				for index < len(line)-1 {
 					if line[index] < 'A' || ('Z' < line[index] && line[index] < 'a') || 'z' < line[index] {
 						break
 					}
@@ -131,24 +140,24 @@ func readDfArg(index int, line string, row int) (int, []Token, error) {
 					index++
 				}
 				// TODO: SIDENTIFIERとして扱う
-				tokens = append(tokens, Token{Content: line[start : index], Kind: SASSIGNVARIABLE, Line: row + 1})
+				tokens = append(tokens, Token{Content: line[start:index], Kind: SASSIGNVARIABLE, Line: row + 1})
 			}
 		}
 
 		return index, []Token{}, errors.New(fmt.Sprintf("Variable in Dfarg: %d find invalid token in \"%s\".", index, line))
 	} else {
 		start := index
-		for index < len(line) - 1 {
-			if line[index : index + 2] == "{{" {
+		for index < len(line)-1 {
+			if line[index:index+2] == "{{" {
 				break
 			}
 			index++
 		}
 
-		if index == len(line) - 1 {
-			return len(line), []Token{Token{Content: line[start : len(line)], Kind: SDFARG, Line: row + 1}}, nil
+		if index == len(line)-1 {
+			return len(line), []Token{Token{Content: line[start:len(line)], Kind: SDFARG, Line: row + 1}}, nil
 		} else {
-			return index, []Token{Token{Content: line[start : index], Kind: SDFARG, Line: row + 1}}, nil
+			return index, []Token{Token{Content: line[start:index], Kind: SDFARG, Line: row + 1}}, nil
 		}
 	}
 }
@@ -161,7 +170,7 @@ func readDfArgs(index int, line string, row int) (int, []Token, error) {
 	for line[index] == ' ' {
 		index++
 	}
-	
+
 	for index < len(line) {
 
 		index, newToken, err = readDfArg(index, line, row)
@@ -179,7 +188,7 @@ func readString(index int, line string, row int) (int, Token, error) {
 	start := index
 	for index < len(line) {
 		index++
-		if (line[index] == '"') {
+		if line[index] == '"' {
 			return index + 1, Token{Content: line[start+1 : index], Kind: SSTRING, Line: row + 1}, nil
 		}
 	}
@@ -188,11 +197,11 @@ func readString(index int, line string, row int) (int, Token, error) {
 
 func readIdentifier(index int, line string, row int) (int, Token, error) {
 	start := index
-	if (('a' <= line[index] && line[index] <= 'z') || ('A' <= line[index] && line[index] <= 'Z')) {
+	if ('a' <= line[index] && line[index] <= 'z') || ('A' <= line[index] && line[index] <= 'Z') {
 		for index < len(line) {
 			index++
-			if (!isAlphabetOrNumber(line, index)) {
-				return index, Token{Content: line[start : index], Kind: SIDENTIFIER, Line: row + 1}, nil
+			if !isAlphabetOrNumber(line, index) {
+				return index, Token{Content: line[start:index], Kind: SIDENTIFIER, Line: row + 1}, nil
 			}
 		}
 	}

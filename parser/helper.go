@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 
 	"myriad/tokenizer"
 )
@@ -11,7 +11,7 @@ func (p *Parser) program() error {
 	var err error
 
 	// { 関数インポート文 }
-	for ;; {
+	for {
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIMPORT {
 			break
 		}
@@ -23,7 +23,7 @@ func (p *Parser) program() error {
 	}
 
 	// { 関数 }
-	for ;; {
+	for {
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SIDENTIFIER {
 			break
 		}
@@ -37,7 +37,7 @@ func (p *Parser) program() error {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SMAIN {
 		return nil
 	}
-	
+
 	// メイン部
 	err = p.mainFunction()
 	if err != nil {
@@ -101,7 +101,7 @@ func (p *Parser) function() error {
 	}
 
 	// 引数宣言部
-	err = p.argumentDecralation()
+	err = p.argumentDeclaration()
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (p *Parser) mainFunction() error {
 	p.index++
 
 	// 引数宣言部
-	err = p.argumentDecralation()
+	err = p.argumentDeclaration()
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (p *Parser) mainFunction() error {
 }
 
 // 引数宣言部
-func (p *Parser) argumentDecralation() error {
+func (p *Parser) argumentDeclaration() error {
 	var err error
 
 	// "("
@@ -153,7 +153,7 @@ func (p *Parser) argumentDecralation() error {
 	p.index++
 
 	// 引数群
-	if 	p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER {
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER {
 		err = p.arguments()
 		if err != nil {
 			return err
@@ -180,14 +180,14 @@ func (p *Parser) arguments() error {
 		return err
 	}
 
-	for ;; {
+	for {
 		// ","
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
 		p.index++
-		
+
 		// 変数
 		err = p.variable()
 		if err != nil {
@@ -253,11 +253,11 @@ func (p *Parser) description() error {
 		return err
 	}
 
-	for ;; {
+	for {
 		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SIDENTIFIER && p.tokens[p.index].Kind != tokenizer.SIF) {
 			break
 		}
-			
+
 		err = p.descriptionBlock()
 		if err != nil {
 			return err
@@ -277,13 +277,13 @@ func (p *Parser) descriptionBlock() error {
 		if err != nil {
 			return err
 		}
-	} else if p.index + 1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index + 1].Kind == tokenizer.SLPAREN {
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index+1].Kind == tokenizer.SLPAREN {
 		// 関数呼び出し文
 		err = p.functionCall()
 		if err != nil {
 			return err
 		}
-	} else if p.index + 1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index + 1].Kind == tokenizer.SDEFINE {
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIDENTIFIER && p.tokens[p.index+1].Kind == tokenizer.SDEFINE {
 		// 変数定義文
 		err = p.defineVariable()
 	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SIF {
@@ -303,14 +303,13 @@ func (p *Parser) descriptionBlock() error {
 func (p *Parser) dockerFile() error {
 	var err error
 	// Df命令
-	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SLDOUBLEBRA ) {
+	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != tokenizer.SDFCOMMAND && p.tokens[p.index].Kind != tokenizer.SDFARG && p.tokens[p.index].Kind != tokenizer.SLDOUBLEBRA) {
 		return errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
 	}
 
 	if p.tokens[p.index].Kind == tokenizer.SDFCOMMAND {
 		p.index++
 	}
-
 
 	// Df引数部
 	err = p.dfArgs()
@@ -329,7 +328,7 @@ func (p *Parser) dfArgs() error {
 		return err
 	}
 
-	for ;; {
+	for {
 		if p.index < len(p.tokens) && (p.tokens[p.index].Kind == tokenizer.SDFARG || p.tokens[p.index].Kind == tokenizer.SLDOUBLEBRA) {
 			err = p.dfArg()
 			if err != nil {
@@ -367,7 +366,7 @@ func (p *Parser) replaceFormula() error {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SLDOUBLEBRA {
 		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
-	
+
 	p.index++
 
 	// 置換変数
@@ -451,14 +450,13 @@ func (p *Parser) rowOfFormulas() error {
 		return err
 	}
 
-	for ;; {
+	for {
 		// ","
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
 		p.index++
-
 
 		// 式
 		err = p.formula()
@@ -505,7 +503,7 @@ func (p *Parser) ifBlock() error {
 	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
 		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
-	
+
 	p.index++
 
 	// 記述部
@@ -521,7 +519,7 @@ func (p *Parser) ifBlock() error {
 
 	p.index++
 
-	for ;; {
+	for {
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SELIF {
 			break
 		}
@@ -611,7 +609,7 @@ func (p *Parser) defineVariable() error {
 	// 文字列
 	if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SSTRING {
 		p.index++
-	// 配列
+		// 配列
 	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == tokenizer.SLBRACE {
 		err = p.array()
 		if err != nil {
@@ -659,14 +657,13 @@ func (p *Parser) rowOfStrings() error {
 
 	p.index++
 
-	for ;; {
+	for {
 		// ","
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SCOMMA {
 			break
 		}
 
 		p.index++
-
 
 		// 文字列
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != tokenizer.SSTRING {
@@ -714,7 +711,7 @@ func (p *Parser) elifSection() error {
 	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
 		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
-	
+
 	p.index++
 
 	// 記述部
@@ -729,7 +726,7 @@ func (p *Parser) elifSection() error {
 	}
 
 	p.index++
-	
+
 	return nil
 }
 
@@ -748,7 +745,7 @@ func (p *Parser) elseSection() error {
 	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != tokenizer.SLBRACE {
 		return errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
-	
+
 	p.index++
 
 	// 記述部
@@ -763,7 +760,7 @@ func (p *Parser) elseSection() error {
 	}
 
 	p.index++
-	
+
 	return nil
 }
 

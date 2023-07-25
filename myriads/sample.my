@@ -1,7 +1,7 @@
 main() {
     version := "1.1.1"
     packages := {"abc", "def", "ghi"}
-    FROM {{pacakge[2]}}
+    FROM {{packages[1]}}
     RUN good \
         {{version}} \
         morning

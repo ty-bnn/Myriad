@@ -1,14 +1,14 @@
 package main
 
-import(
+import (
 	"fmt"
 	"os"
 
-	"myriad/helpers"
-	"myriad/tokenizer"
-	"myriad/parser"
 	"myriad/compiler"
 	"myriad/generator"
+	"myriad/helpers"
+	"myriad/parser"
+	"myriad/tokenizer"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	
+
 	// コンパイル
 	c := &compiler.Compiler{}
 	err = c.Compile(t.Tokens)
@@ -42,14 +42,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	// For debug
-	// for k, v := range *c.FunctionInterCodeMap {
-	// 	fmt.Println(k)
-	// 	for _, c := range v {
-	// 		fmt.Println(c)
-	// 	}
-	// }
 
 	// コード生成
 	g := &generator.Generator{}
