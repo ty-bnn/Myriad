@@ -1,10 +1,10 @@
 package helpers
 
 import (
-	"os"
-	"fmt"
 	"bufio"
 	"errors"
+	"fmt"
+	"os"
 )
 
 func ReadLinesFromFile(samplePath string) ([]string, error) {
@@ -13,10 +13,13 @@ func ReadLinesFromFile(samplePath string) ([]string, error) {
 	// Open file.
 	fp, err := os.Open(samplePath)
 	if err != nil {
-		fp.Close()
 		return []string{}, errors.New(fmt.Sprintf("cannot open %s", samplePath))
 	}
-	defer fp.Close()
+	defer func() {
+		if err := fp.Close(); err != nil {
+			fmt.Println("cannot close file", err)
+		}
+	}()
 
 	// Read sample code line by line.
 	scanner := bufio.NewScanner(fp)
@@ -34,10 +37,13 @@ func WriteFile(codes []string, filePath string) error {
 	// Create file.
 	fp, err := os.Create(filePath)
 	if err != nil {
-		fp.Close()
 		return errors.New(fmt.Sprintf("cannot create Dockerfile"))
 	}
-	defer fp.Close()
+	defer func() {
+		if err := fp.Close(); err != nil {
+			fmt.Println("cannot close file", err)
+		}
+	}()
 
 	for _, code := range codes {
 		_, err := fp.Write([]byte(code))

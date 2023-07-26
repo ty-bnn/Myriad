@@ -1,4 +1,4 @@
-FROM 1.1.1
+FROM def
 RUN good \
     1.1.1 \
     morning
