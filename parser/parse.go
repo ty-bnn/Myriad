@@ -12,7 +12,7 @@ type Parser struct {
 }
 
 func (p *Parser) Parse(tokens []tokenizer.Token) error {
-	fmt.Println("Parseing...")
+	fmt.Println("Parsing...")
 	p.tokens = tokens
 	err := p.program()
 	if err != nil {
