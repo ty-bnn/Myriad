@@ -155,9 +155,9 @@ func readDfArg(index int, line string, row int) (int, []Token, error) {
 		}
 
 		if index == len(line)-1 {
-			return len(line), []Token{Token{Content: line[start:len(line)], Kind: SDFARG, Line: row + 1}}, nil
+			return len(line), []Token{{Content: line[start:], Kind: SDFARG, Line: row + 1}}, nil
 		} else {
-			return index, []Token{Token{Content: line[start:index], Kind: SDFARG, Line: row + 1}}, nil
+			return index, []Token{{Content: line[start:index], Kind: SDFARG, Line: row + 1}}, nil
 		}
 	}
 }
