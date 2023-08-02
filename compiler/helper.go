@@ -223,9 +223,9 @@ func (c *Compiler) variable(argIndex int) error {
 	// 変数名
 	name := c.tokens[c.index].Content
 	if c.functionPointer == "main" {
-		argument = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: ARGUMENT}, Value: os.Args[argIndex+3]}
+		argument = SingleVariable{Name: name, Kind: ARGUMENT, Value: os.Args[argIndex+3]}
 	} else {
-		argument = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: ARGUMENT}}
+		argument = SingleVariable{Name: name, Kind: ARGUMENT}
 	}
 
 	err = c.variableName()
@@ -325,7 +325,7 @@ func (c *Compiler) dockerFile() error {
 	var err error
 	if c.tokens[c.index].Kind == tokenizer.SDFCOMMAND {
 		// Df命令
-		c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: c.tokens[c.index].Content, Kind: COMMAND}})
+		c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{Content: c.tokens[c.index].Content, Kind: COMMAND})
 		c.index++
 	}
 
@@ -364,7 +364,7 @@ func (c *Compiler) dfArgs() error {
 func (c *Compiler) dfArg() error {
 	// 生のDF引数
 	if c.tokens[c.index].Kind == tokenizer.SDFARG {
-		code := NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: c.tokens[c.index].Content, Kind: ROW}}
+		code := NormalInterCode{Content: c.tokens[c.index].Content, Kind: ROW}
 		c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], code)
 		c.index++
 		// 置換式
@@ -406,9 +406,9 @@ func (c *Compiler) replaceFormula() error {
 			return err
 		}
 
-		code = NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: value, Kind: ROW}}
+		code = NormalInterCode{Content: value, Kind: ROW}
 	} else {
-		code = NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: c.tokens[c.index].Content, Kind: VAR}}
+		code = NormalInterCode{Content: c.tokens[c.index].Content, Kind: VAR}
 	}
 
 	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], code)
@@ -449,9 +449,9 @@ func (c *Compiler) functionCall() error {
 			var newCode NormalInterCode
 			argIndex, isExist := c.getArgumentIndex(functionCallName, code.GetContent())
 			if isExist && formulas[argIndex].Kind == tokenizer.SSTRING {
-				newCode = NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: formulas[argIndex].Content, Kind: ROW}}
+				newCode = NormalInterCode{Content: formulas[argIndex].Content, Kind: ROW}
 			} else if isExist && formulas[argIndex].Kind == tokenizer.SIDENTIFIER {
-				newCode = NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Content: formulas[argIndex].Content, Kind: VAR}}
+				newCode = NormalInterCode{Content: formulas[argIndex].Content, Kind: VAR}
 			} else {
 				return errors.New(fmt.Sprintf("semantic error: variable %s is not defined 2", code.GetContent()))
 			}
@@ -555,7 +555,7 @@ func (c *Compiler) ifBlock() error {
 		return err
 	}
 
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], IfInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: IF}, IfContent: ifContent})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], IfInterCode{Kind: IF, IfContent: ifContent})
 	ifIndexes = append(ifIndexes, len(c.FunctionInterCodeMap[c.functionPointer])-1)
 
 	// ")"
@@ -570,7 +570,7 @@ func (c *Compiler) ifBlock() error {
 		return err
 	}
 
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: ENDIF}})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -701,7 +701,7 @@ func (c *Compiler) elifSection() error {
 		return err
 	}
 
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], IfInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: ELIF}, IfContent: ifContent})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], IfInterCode{Kind: ELIF, IfContent: ifContent})
 
 	// ")"
 	c.index++
@@ -715,7 +715,7 @@ func (c *Compiler) elifSection() error {
 		return err
 	}
 
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: ENDIF}})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -728,7 +728,7 @@ func (c *Compiler) elseSection() error {
 	var err error
 
 	// "else"
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: ELSE}})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{Kind: ELSE})
 
 	c.index++
 
@@ -741,7 +741,7 @@ func (c *Compiler) elseSection() error {
 		return err
 	}
 
-	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{InterCodeCommonDetail: InterCodeCommonDetail{Kind: ENDIF}})
+	c.FunctionInterCodeMap[c.functionPointer] = append(c.FunctionInterCodeMap[c.functionPointer], NormalInterCode{Kind: ENDIF})
 
 	// "}"
 	c.index++
@@ -768,14 +768,14 @@ func (c *Compiler) defineVariable() error {
 		// 文字列
 		value := c.tokens[c.index].Content
 		c.index++
-		newVariable = SingleVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: VARIABLE}, Value: value}
+		newVariable = SingleVariable{Name: name, Kind: VARIABLE, Value: value}
 	} else if c.tokens[c.index].Kind == tokenizer.SLBRACE {
 		// 配列
 		values, err := c.array()
 		if err != nil {
 			return err
 		}
-		newVariable = MultiVariable{VariableCommonDetail: VariableCommonDetail{Name: name, Kind: VARIABLE}, Values: values}
+		newVariable = MultiVariable{Name: name, Kind: VARIABLE, Values: values}
 	}
 
 	varIndex, isExist := c.getVariableIndex(c.functionPointer, name)

@@ -23,15 +23,10 @@ const (
 	ENDIF
 )
 
-// InterCodeCommonDetail 中間言語の共通部分
-type InterCodeCommonDetail struct {
-	Content string
-	Kind    int
-}
-
 // NormalInterCode ROW, COMMAND, VAR, ELSE, ENDIF
 type NormalInterCode struct {
-	InterCodeCommonDetail
+	Content string
+	Kind    int
 }
 
 func (n NormalInterCode) GetContent() string {
@@ -61,7 +56,8 @@ type IfContent struct {
 
 // IfInterCode IF, ELIF
 type IfInterCode struct {
-	InterCodeCommonDetail
+	Content string
+	Kind    int
 	IfContent
 }
 
@@ -93,14 +89,10 @@ const (
 	ARGUMENT
 )
 
-type VariableCommonDetail struct {
-	Name string
-	Kind VariableKind
-}
-
 // SingleVariable 単一変数用のインタフェース実装
 type SingleVariable struct {
-	VariableCommonDetail
+	Name  string
+	Kind  VariableKind
 	Value string
 }
 
@@ -122,7 +114,8 @@ func (s SingleVariable) getKind() VariableKind {
 
 // MultiVariable 配列型変数用のインタフェース実装
 type MultiVariable struct {
-	VariableCommonDetail
+	Name   string
+	Kind   VariableKind
 	Values []string
 }
 
