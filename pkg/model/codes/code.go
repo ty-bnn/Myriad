@@ -6,7 +6,6 @@ type Code interface {
 
 type CodeKind int
 
-// TODO: 全ての型にそれぞれの構造体を作る
 const (
 	LITERAL CodeKind = iota
 	COMMAND

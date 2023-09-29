@@ -18,7 +18,6 @@ func (g *Generator) callFunc(funcName string, args []string) error {
 
 	var index int
 
-	// TODO: 引数の定義から始める
 	for _, arg := range args {
 		code := funcCodes[index]
 		v := code.(codes.Define).Var.(vars.Single)

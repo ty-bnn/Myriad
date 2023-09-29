@@ -18,12 +18,12 @@ func (p *Parser) isCompiled(file string) bool {
 }
 
 func (p *Parser) addFuncCodes(funcToCodes map[string][]codes.Code) error {
-	for funcName, codes := range funcToCodes {
+	for funcName, funcCodes := range funcToCodes {
 		if _, has := p.FuncToCodes[funcName]; has {
 			return errors.New(fmt.Sprintf("semantic error: %s is already declared", funcName))
 		}
 
-		p.FuncToCodes[funcName] = codes
+		p.FuncToCodes[funcName] = funcCodes
 	}
 
 	return nil
