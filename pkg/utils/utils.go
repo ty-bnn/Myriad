@@ -1,4 +1,4 @@
-package helpers
+package utils
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ func ReadLinesFromFile(samplePath string) ([]string, error) {
 		}
 	}()
 
-	// Read sample code line by line.
+	// Read sample codes line by line.
 	scanner := bufio.NewScanner(fp)
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())

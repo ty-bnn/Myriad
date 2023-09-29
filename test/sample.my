@@ -1,0 +1,6 @@
+main(version) {
+    RUN good \
+        {{version}} \
+        morning
+    CMD [hfsdf]
+}

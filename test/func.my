@@ -1,0 +1,12 @@
+runCommand(version) {
+    if (version == "1.1.1") {
+        if (version == "1.1.2") {
+            RUN bbb
+        } else if (version == "1.1.1") {
+            RUN ccc
+        }
+        RUN aaa
+    } else {
+        RUN bbb
+    }
+}
