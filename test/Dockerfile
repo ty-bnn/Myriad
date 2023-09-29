@@ -1,4 +1,5 @@
-RUN good \
-    v1.0.0 \
+RUN ccc \
+    good \
+    aaa \
     morning
 CMD [hfsdf]

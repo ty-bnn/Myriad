@@ -1,4 +1,10 @@
 main(version) {
+    version = "aaa"
+
+    if (version == "aaa") {
+        version := "ccc"
+        RUN {{version}}
+    }
     RUN good \
         {{version}} \
         morning

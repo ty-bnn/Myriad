@@ -388,6 +388,14 @@ func (p *Parser) descriptionBlock() ([]codes.Code, error) {
 		}
 
 		return []codes.Code{dvCode}, err
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.ASSIGN {
+		// 変数代入文
+		avCode, err := p.assignVariable()
+		if err != nil {
+			return nil, err
+		}
+
+		return []codes.Code{avCode}, err
 	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.IF {
 		// ifブロック
 		ifCodes, err := p.ifBlock()
@@ -756,6 +764,45 @@ func (p *Parser) defineVariable() (codes.Code, error) {
 
 	p.index++
 
+	variable, err := p.assignValue(vName)
+	if err != nil {
+		return nil, err
+	}
+
+	defCode := codes.Define{Kind: codes.DEFINE, Var: variable}
+
+	return defCode, nil
+}
+
+// 変数代入文
+func (p *Parser) assignVariable() (codes.Code, error) {
+	var err error
+
+	// 変数名
+	vName, err := p.variableName()
+	if err != nil {
+		return nil, err
+	}
+
+	// "="
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ASSIGN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '='"))
+	}
+
+	p.index++
+
+	variable, err := p.assignValue(vName)
+	if err != nil {
+		return nil, err
+	}
+
+	defCode := codes.Assign{Kind: codes.ASSIGN, Var: variable}
+
+	return defCode, nil
+}
+
+// 代入値
+func (p *Parser) assignValue(vName string) (vars.Var, error) {
 	var variable vars.Var
 	// 文字列
 	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.STRING {
@@ -774,9 +821,7 @@ func (p *Parser) defineVariable() (codes.Code, error) {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find string or '{'"))
 	}
 
-	defCode := codes.Define{Kind: codes.DEFINE, Var: variable}
-
-	return defCode, nil
+	return variable, nil
 }
 
 // 配列

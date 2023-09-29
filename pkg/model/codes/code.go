@@ -10,6 +10,7 @@ const (
 	LITERAL CodeKind = iota
 	COMMAND
 	DEFINE
+	ASSIGN
 	REPLACE
 	CALLPROC
 	IF

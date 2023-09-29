@@ -53,6 +53,13 @@ func (g *Generator) callFunc(funcName string, args []string) error {
 			define := code.(codes.Define)
 			vTable = append(vTable, define.Var)
 			index++
+		case codes.ASSIGN:
+			assign := code.(codes.Assign)
+			if err := assignVar(vTable, assign.Var); err != nil {
+				return err
+			}
+
+			index++
 		case codes.REPLACE:
 			rep := code.(codes.Replace)
 			value, err := getValue(vTable, rep.RepVar)

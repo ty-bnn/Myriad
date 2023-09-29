@@ -62,5 +62,18 @@ func getValue(vTable []vars.Var, target vars.Var) (string, error) {
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("semantic error: %s is not declared", target.GetName()))
+	return "", errors.New(fmt.Sprintf("semantic error: %s is not declared1", target.GetName()))
+}
+
+func assignVar(vTable []vars.Var, target vars.Var) error {
+	for i := len(vTable) - 1; i >= 0; i-- {
+		if vTable[i].GetName() != target.GetName() {
+			continue
+		}
+
+		vTable[i] = target
+		return nil
+	}
+
+	return errors.New(fmt.Sprintf("semantic error: %s is not declared2", target.GetName()))
 }
