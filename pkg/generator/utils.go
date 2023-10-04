@@ -62,7 +62,18 @@ func getValue(vTable []vars.Var, target vars.Var) (string, error) {
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("semantic error: %s is not declared1", target.GetName()))
+	return "", errors.New(fmt.Sprintf("semantic error: %s is not declared", target.GetName()))
+}
+
+// getValues returns the values of array.
+func getValues(vTable []vars.Var, target vars.Var) ([]string, error) {
+	for i := len(vTable) - 1; i >= 0; i++ {
+		if vTable[i].GetKind() == vars.ARRAY && vTable[i].GetName() == target.GetName() {
+			return vTable[i].(vars.Array).Values, nil
+		}
+	}
+
+	return nil, errors.New(fmt.Sprintf("semantic error: array %s is not declared", target.GetName()))
 }
 
 func assignVar(vTable []vars.Var, target vars.Var) error {

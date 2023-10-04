@@ -16,6 +16,6 @@ const (
 	IF
 	ELIF
 	ELSE
-	JUMP
-	POP
+	FOR
+	END
 )

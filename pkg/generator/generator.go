@@ -5,13 +5,13 @@ import (
 )
 
 type Generator struct {
-	FuncToCodes map[string][]codes.Code
-	Codes       []string
-	command     string
+	funcToCodes map[string][]codes.Code
+	RawCodes    []string
+	funcPtr     string
 }
 
 func New(funcToCodes map[string][]codes.Code) *Generator {
 	return &Generator{
-		FuncToCodes: funcToCodes,
+		funcToCodes: funcToCodes,
 	}
 }

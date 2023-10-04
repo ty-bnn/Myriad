@@ -9,6 +9,8 @@ const (
 	IF
 	ELIF
 	ELSE
+	FOR
+	IN
 	LPAREN
 	RPAREN
 	COMMA

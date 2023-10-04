@@ -277,6 +277,7 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 }
 
 // 変数
+// TODO: 変数いらない、変数名だけで良い
 func (p *Parser) variable() (string, error) {
 	var err error
 
@@ -290,6 +291,7 @@ func (p *Parser) variable() (string, error) {
 }
 
 // 関数記述部
+// TODO: if文やfor文の処理記述部分にも適用可能
 func (p *Parser) functionDescription() ([]codes.Code, error) {
 	var err error
 
@@ -330,7 +332,7 @@ func (p *Parser) description() ([]codes.Code, error) {
 	descCodes = append(descCodes, descBCodes...)
 
 	for {
-		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFCOMMAND && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.IDENTIFIER && p.tokens[p.index].Kind != token.IF) {
+		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFCOMMAND && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.IDENTIFIER && p.tokens[p.index].Kind != token.IF && p.tokens[p.index].Kind != token.FOR) {
 			break
 		}
 
@@ -340,23 +342,6 @@ func (p *Parser) description() ([]codes.Code, error) {
 		}
 
 		descCodes = append(descCodes, descBCodes...)
-	}
-
-	// POPする回数を計算
-	// 単純にDEFINEの物だけを探すと既にPOP済みの変数までカウントしてしまうためだめ
-	var popNum int
-
-	for _, code := range descCodes {
-		switch code.GetKind() {
-		case codes.DEFINE:
-			popNum++
-		case codes.POP:
-			popNum--
-		}
-	}
-
-	for i := 0; i < popNum; i++ {
-		descCodes = append(descCodes, codes.Pop{Kind: codes.POP})
 	}
 
 	return descCodes, nil
@@ -404,6 +389,14 @@ func (p *Parser) descriptionBlock() ([]codes.Code, error) {
 		}
 
 		return ifCodes, nil
+	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.FOR {
+		// forブロック
+		forCodes, err := p.forBlock()
+		if err != nil {
+			return nil, err
+		}
+
+		return forCodes, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
@@ -590,68 +583,34 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
 	}
 
-	var ifCodes []codes.Code
-	ifCode, ifDescCodes, err := p.ifSection()
+	ifCodes, err := p.ifSection()
 	if err != nil {
 		return nil, err
 	}
 
-	// 一旦true時のJUMP以外でifCodesを形成する
-	ifCodes = append(ifCodes, ifCode)
-	ifCodes = append(ifCodes, codes.Jump{Kind: codes.JUMP, NextOffset: len(ifDescCodes) + 1 + 1}) // NextOffset: len(ifDescCodes) + JUMPコードの分 + 1
-	ifCodes = append(ifCodes, ifDescCodes...)
+	ifBCodes = append(ifBCodes, ifCodes...)
 
-	var elifBlocks [][]codes.Code
 	for {
-		var elifCodes []codes.Code
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ELIF {
 			break
 		}
 
 		// elif節
-		elifCode, elifDescCodes, err := p.elifSection()
+		elifCodes, err := p.elifSection()
 		if err != nil {
 			return nil, err
 		}
-
-		// 一旦true時のJUMP以外でelifCodesを形成する
-		elifCodes = append(elifCodes, elifCode)
-		elifCodes = append(elifCodes, codes.Jump{Kind: codes.JUMP, NextOffset: len(elifDescCodes) + 1 + 1}) // NextOffSer: len(elifDescCodes) + JUMPコードの分 + 1
-		elifCodes = append(elifCodes, elifDescCodes...)
-
-		elifBlocks = append(elifBlocks, elifCodes)
-	}
-
-	var elseCodes []codes.Code
-	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.ELSE {
-		elseCodes, err = p.elseSection()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// if節のtrue時JUMP先offsetを求める
-	var offsetFromIf int
-	for _, elifCodes := range elifBlocks {
-		offsetFromIf += len(elifCodes) + 1
-	}
-	offsetFromIf += len(elseCodes)
-	offsetFromIf += 1
-
-	// ifCodesが完成する
-	ifCodes = append(ifCodes, codes.Jump{Kind: codes.JUMP, NextOffset: offsetFromIf})
-
-	ifBCodes = append(ifBCodes, ifCodes...)
-
-	for _, elifCodes := range elifBlocks {
-		// elifCodesが完成する
-		offsetFromIf -= len(elifCodes) + 1
-		elifCodes = append(elifCodes, codes.Jump{Kind: codes.JUMP, NextOffset: offsetFromIf})
 
 		ifBCodes = append(ifBCodes, elifCodes...)
 	}
 
-	ifBCodes = append(ifBCodes, elseCodes...)
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.ELSE {
+		elseCodes, err := p.elseSection()
+		if err != nil {
+			return nil, err
+		}
+		ifBCodes = append(ifBCodes, elseCodes...)
+	}
 
 	return ifBCodes, nil
 }
@@ -887,19 +846,20 @@ func (p *Parser) rowOfStrings() ([]string, error) {
 // if節
 // ifコードとdescriptionコードを分けて返す
 // 間にJUMP命令が挟まるため、ifBlockで結合処理を行う
-func (p *Parser) ifSection() (codes.Code, []codes.Code, error) {
+func (p *Parser) ifSection() ([]codes.Code, error) {
+	var ifCodes []codes.Code
 	var err error
 
 	// "if"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.IF {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IF {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
 	}
 
 	p.index++
 
 	// "("
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.LPAREN {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
 	p.index++
@@ -907,21 +867,22 @@ func (p *Parser) ifSection() (codes.Code, []codes.Code, error) {
 	// 条件判定式
 	condition, err := p.conditionalFormula()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ifCode := codes.If{Kind: codes.IF, Condition: condition}
+	ifCodes = append(ifCodes, ifCode)
 
 	// ")"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.RPAREN {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
 	p.index++
 
 	// "{"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.LBRACE {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 
 	p.index++
@@ -929,35 +890,41 @@ func (p *Parser) ifSection() (codes.Code, []codes.Code, error) {
 	// 記述部
 	descCodes, err := p.description()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
+	ifCodes = append(descCodes)
+
 	// "}"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.RBRACE {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
 	p.index++
 
-	return ifCode, descCodes, nil
+	endCode := codes.End{Kind: codes.END}
+	ifCodes = append(ifCodes, endCode)
+
+	return ifCodes, nil
 }
 
 // elif節
 // elifコードとdescriptionコードを分けて返す
 // 間にJUMP命令が挟まるため、ifBlockで結合処理を行う
-func (p *Parser) elifSection() (codes.Code, []codes.Code, error) {
+func (p *Parser) elifSection() ([]codes.Code, error) {
+	var elifCodes []codes.Code
 	var err error
 
 	// "else if"
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ELIF {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
 	}
 
 	p.index++
 
 	// "("
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.LPAREN {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
 
 	p.index++
@@ -965,21 +932,22 @@ func (p *Parser) elifSection() (codes.Code, []codes.Code, error) {
 	// 条件判定式
 	condition, err := p.conditionalFormula()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	elifCode := codes.Elif{Kind: codes.ELIF, Condition: condition}
+	elifCodes = append(elifCodes, elifCode)
 
 	// ")"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.RPAREN {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
 
 	p.index++
 
 	// "{"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.LBRACE {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 
 	p.index++
@@ -987,17 +955,22 @@ func (p *Parser) elifSection() (codes.Code, []codes.Code, error) {
 	// 記述部
 	descCodes, err := p.description()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
+	elifCodes = append(elifCodes, descCodes...)
+
 	// "}"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.RBRACE {
-		return nil, nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
 	p.index++
 
-	return elifCode, descCodes, nil
+	endCode := codes.End{Kind: codes.END}
+	elifCodes = append(elifCodes, endCode)
+
+	return elifCodes, nil
 }
 
 // else節
@@ -1017,7 +990,7 @@ func (p *Parser) elseSection() ([]codes.Code, error) {
 	p.index++
 
 	// "{"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.LBRACE {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
 	}
 
@@ -1032,13 +1005,94 @@ func (p *Parser) elseSection() ([]codes.Code, error) {
 	elseCodes = append(elseCodes, descCodes...)
 
 	// "}"
-	if p.index >= len(p.tokens) && p.tokens[p.index].Kind != token.RBRACE {
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
 	}
 
 	p.index++
 
-	return descCodes, nil
+	endCode := codes.End{Kind: codes.END}
+	elseCodes = append(elseCodes, endCode)
+
+	return elseCodes, nil
+}
+
+// forブロック
+func (p *Parser) forBlock() ([]codes.Code, error) {
+	var forCodes []codes.Code
+	// "for"
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.FOR {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'for'"))
+	}
+
+	p.index++
+
+	// "("
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+
+	p.index++
+
+	// 変数名
+	itrName, err := p.variableName()
+	if err != nil {
+		return nil, err
+	}
+
+	itrVar := vars.Single{Kind: vars.SINGLE, Name: itrName}
+
+	// "in"
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IN {
+		return nil, errors.New(fmt.Sprintf("syntax errir: cannot find 'in'"))
+	}
+
+	p.index++
+
+	// 変数名
+	arrayName, err := p.variableName()
+	if err != nil {
+		return nil, err
+	}
+
+	arrayVar := vars.Array{Kind: vars.ARRAY, Name: arrayName}
+
+	// ")"
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+
+	p.index++
+
+	forCode := codes.For{Kind: codes.FOR, Itr: itrVar, Array: arrayVar}
+	forCodes = append(forCodes, forCode)
+
+	// "{"
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
+	}
+
+	p.index++
+
+	// 記述部
+	descCodes, err := p.description()
+	if err != nil {
+		return nil, err
+	}
+
+	forCodes = append(forCodes, descCodes...)
+
+	// "}"
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
+	}
+
+	p.index++
+
+	endCode := codes.End{Kind: codes.END}
+	forCodes = append(forCodes, endCode)
+
+	return forCodes, nil
 }
 
 // 関数名

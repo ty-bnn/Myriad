@@ -1,12 +1,10 @@
-main(version) {
-    version = "aaa"
-
-    if (version == "aaa") {
-        version := "ccc"
-        RUN {{version}}
+main() {
+    packages := {"aaa", "bbb", "ccc"}
+    for (package in packages) {
+        RUN {{package}}
     }
+
     RUN good \
-        {{version}} \
         morning
     CMD [hfsdf]
 }

@@ -12,4 +12,5 @@ const (
 	ARRAY
 	ELEMENT
 	LITERAL
+	COUNTER
 )
