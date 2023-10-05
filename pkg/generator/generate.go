@@ -154,7 +154,7 @@ func (g *Generator) ifBlock(vTable []vars.Var) ([]string, error) {
 	ifBCodes = append(ifBCodes, ifSecCodes...)
 
 	// ELIFコード
-	for funcCodes[g.index].GetKind() == codes.ELIF {
+	for g.index < len(funcCodes) && funcCodes[g.index].GetKind() == codes.ELIF {
 		var elifSecCodes []string
 		elifSecCodes, err = g.elifSection(vTable)
 		if err != nil {
@@ -164,7 +164,7 @@ func (g *Generator) ifBlock(vTable []vars.Var) ([]string, error) {
 	}
 
 	// ELSEコード
-	if funcCodes[g.index].GetKind() == codes.ELSE {
+	if g.index < len(funcCodes) && funcCodes[g.index].GetKind() == codes.ELSE {
 		var elseSecCodes []string
 		elseSecCodes, err = g.elseSection(vTable)
 		if err != nil {

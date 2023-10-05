@@ -1,7 +1,19 @@
+hello(package) {
+    if (package == "aaa") {
+        FROM {{package}}
+        RUN {{package}} \
+            aaa
+    } else if (package == "bbb") {
+        FROM {{package}}
+        RUN {{package}} \
+            bbb
+    }
+}
+
 main() {
     packages := {"aaa", "bbb", "ccc"}
     for (package in packages) {
-        RUN {{package}}
+        hello(package)
     }
 
     RUN good \

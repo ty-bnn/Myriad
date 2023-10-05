@@ -893,7 +893,7 @@ func (p *Parser) ifSection() ([]codes.Code, error) {
 		return nil, err
 	}
 
-	ifCodes = append(descCodes)
+	ifCodes = append(ifCodes, descCodes...)
 
 	// "}"
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
