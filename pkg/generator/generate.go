@@ -73,18 +73,6 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			command := code.(codes.Command)
 			rawCodes = append(rawCodes, command.Content)
 			g.index++
-			// TODO: RUNの連結はGenerateするときに行う
-			//if g.command == "RUN" && command.Content == "RUN" {
-			//	// RUN命令の結合
-			//	str := g.Codes[len(g.Codes)-1]
-			//	str = str[0:len(str)-1] + " \\\n"
-			//	g.Codes[len(g.Codes)-1] = str
-			//
-			//	g.Codes = append(g.Codes, "   ")
-			//} else {
-			//	g.command = command.Content
-			//	g.Codes = append(g.Codes, command.Content)
-			//}
 		case codes.DEFINE:
 			define := code.(codes.Define)
 			vTable = append(vTable, define.Var)
