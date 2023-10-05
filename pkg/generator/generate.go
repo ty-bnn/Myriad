@@ -33,24 +33,23 @@ func (g *Generator) callFunc(args []string) ([]string, error) {
 		return nil, errors.New(fmt.Sprintf("semantic error: %s is not defined", g.funcPtr))
 	}
 
-	var index int
 	var vTable []vars.Var
 
 	// 引数を変数として定義
 	for _, arg := range args {
-		if len(funcCodes) <= index || funcCodes[index].GetKind() != codes.DEFINE {
+		if len(funcCodes) <= g.index || funcCodes[g.index].GetKind() != codes.DEFINE {
 			return nil, errors.New(fmt.Sprintf("semantic error: %s got too many args", g.funcPtr))
 		}
 
-		v := funcCodes[index].(codes.Define).Var.(vars.Single)
+		v := funcCodes[g.index].(codes.Define).Var.(vars.Single)
 		v.Value = arg
 		vTable = append(vTable, v)
 
-		index++
+		g.index++
 	}
 
 	// コードブロック
-	rowCodes, _, err := g.codeBlock(index, vTable)
+	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
 		return nil, err
 	}
@@ -58,22 +57,22 @@ func (g *Generator) callFunc(args []string) ([]string, error) {
 	return rowCodes, nil
 }
 
-func (g *Generator) codeBlock(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 	var rawCodes []string
 
-	for index < len(funcCodes) {
-		code := funcCodes[index]
+	for g.index < len(funcCodes) {
+		code := funcCodes[g.index]
 
 		switch code.GetKind() {
 		case codes.LITERAL:
 			literal := code.(codes.Literal)
 			rawCodes = append(rawCodes, literal.Content)
-			index++
+			g.index++
 		case codes.COMMAND:
 			command := code.(codes.Command)
 			rawCodes = append(rawCodes, command.Content)
-			index++
+			g.index++
 			// TODO: RUNの連結はGenerateするときに行う
 			//if g.command == "RUN" && command.Content == "RUN" {
 			//	// RUN命令の結合
@@ -89,209 +88,213 @@ func (g *Generator) codeBlock(index int, vTable []vars.Var) ([]string, int, erro
 		case codes.DEFINE:
 			define := code.(codes.Define)
 			vTable = append(vTable, define.Var)
-			index++
+			g.index++
 		case codes.ASSIGN:
 			assign := code.(codes.Assign)
 			if err := assignVar(vTable, assign.Var); err != nil {
-				return nil, -1, err
+				return nil, err
 			}
-			index++
+			g.index++
 		case codes.REPLACE:
 			rep := code.(codes.Replace)
 			value, err := getValue(vTable, rep.RepVar)
 			if err != nil {
-				return nil, -1, err
+				return nil, err
 			}
 			rawCodes = append(rawCodes, value)
-			index++
+			g.index++
 		case codes.CALLPROC:
 			callProc := code.(codes.CallProc)
 			var args []string
 			for _, arg := range callProc.Args {
 				value, err := getValue(vTable, arg)
 				if err != nil {
-					return nil, -1, err
+					return nil, err
 				}
 
 				args = append(args, value)
 			}
 
-			calledFrom := g.funcPtr
+			funcStack := g.funcPtr
 			g.funcPtr = callProc.ProcName
+			indexStack := g.index
+			g.index = 0
 
 			funcRawCodes, err := g.callFunc(args)
 			if err != nil {
-				return nil, -1, err
+				return nil, err
 			}
 
-			g.funcPtr = calledFrom
+			g.funcPtr = funcStack
+			g.index = indexStack
+
 			rawCodes = append(rawCodes, funcRawCodes...)
-			index++
+			g.index++
 		case codes.IF:
 			var ifCodes []string
 			var err error
-			ifCodes, index, err = g.ifBlock(index, vTable)
+			ifCodes, err = g.ifBlock(vTable)
 			if err != nil {
-				return nil, -1, err
+				return nil, err
 			}
 			rawCodes = append(rawCodes, ifCodes...)
 		case codes.FOR:
 			var forCodes []string
 			var err error
-			forCodes, index, err = g.forBlock(index, vTable)
+			forCodes, err = g.forBlock(vTable)
 			if err != nil {
-				return nil, -1, err
+				return nil, err
 			}
 			rawCodes = append(rawCodes, forCodes...)
 		default:
-			return rawCodes, index, nil
+			return rawCodes, nil
 		}
 	}
 
-	return rawCodes, index, nil
+	return rawCodes, nil
 }
 
-func (g *Generator) ifBlock(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) ifBlock(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 	var ifBCodes []string
 
 	// IFコード
-	ifSecCodes, index, err := g.ifSection(index, vTable)
+	ifSecCodes, err := g.ifSection(vTable)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 	ifBCodes = append(ifBCodes, ifSecCodes...)
 
 	// ELIFコード
-	for funcCodes[index].GetKind() == codes.ELIF {
+	for funcCodes[g.index].GetKind() == codes.ELIF {
 		var elifSecCodes []string
-		elifSecCodes, index, err = g.elifSection(index, vTable)
+		elifSecCodes, err = g.elifSection(vTable)
 		if err != nil {
-			return nil, -1, err
+			return nil, err
 		}
 		ifBCodes = append(ifBCodes, elifSecCodes...)
 	}
 
 	// ELSEコード
-	if funcCodes[index].GetKind() == codes.ELSE {
+	if funcCodes[g.index].GetKind() == codes.ELSE {
 		var elseSecCodes []string
-		elseSecCodes, index, err = g.elseSection(index, vTable)
+		elseSecCodes, err = g.elseSection(vTable)
 		if err != nil {
-			return nil, -1, err
+			return nil, err
 		}
 		ifBCodes = append(ifBCodes, elseSecCodes...)
 	}
 
-	return ifBCodes, index, nil
+	return ifBCodes, nil
 }
 
-func (g *Generator) ifSection(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) ifSection(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 
 	// IFコード
-	ifCode := funcCodes[index].(codes.If)
+	ifCode := funcCodes[g.index].(codes.If)
 	ok, err := getConditionEval(vTable, ifCode.Condition)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
-	index++
+	g.index++
 
 	// コードブロック
-	rowCodes, index, err := g.codeBlock(index, vTable)
+	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
 	// ENDコード
-	index++
+	g.index++
 
 	if !ok {
-		return nil, index, nil
+		return nil, nil
 	}
 
-	return rowCodes, index, nil
+	return rowCodes, nil
 }
 
-func (g *Generator) elifSection(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) elifSection(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 
 	// ELIFコード
-	elifCode := funcCodes[index].(codes.Elif)
+	elifCode := funcCodes[g.index].(codes.Elif)
 	ok, err := getConditionEval(vTable, elifCode.Condition)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
-	index++
+	g.index++
 
 	// コードブロック
-	rowCodes, index, err := g.codeBlock(index, vTable)
+	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
 	// ENDコード
-	index++
+	g.index++
 
 	if !ok {
-		return nil, index, nil
+		return nil, nil
 	}
 
-	return rowCodes, index, nil
+	return rowCodes, nil
 }
 
-func (g *Generator) elseSection(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) elseSection(vTable []vars.Var) ([]string, error) {
 	// ELSEコード
-	index++
+	g.index++
 
 	// コードブロック
-	rowCodes, index, err := g.codeBlock(index, vTable)
+	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
 	// ENDブロック
-	index++
+	g.index++
 
-	return rowCodes, index, nil
+	return rowCodes, nil
 }
 
-func (g *Generator) forBlock(index int, vTable []vars.Var) ([]string, int, error) {
+func (g *Generator) forBlock(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 
 	var forCodes []string
 
 	// FORコード
-	forCode := funcCodes[index].(codes.For)
-	index++
+	forCode := funcCodes[g.index].(codes.For)
+	g.index++
 
 	array, err := getValues(vTable, forCode.Array)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
-	start := index
+	start := g.index
 	for _, value := range array {
 		var rowCodes []string
-		index = start
+		g.index = start
 
 		forCode.Itr.Value = value
 		vTable = append(vTable, forCode.Itr)
 
 		// コードブロック
-		rowCodes, index, err = g.codeBlock(index, vTable)
+		rowCodes, err = g.codeBlock(vTable)
 		if err != nil {
-			return nil, -1, err
+			return nil, err
 		}
 		forCodes = append(forCodes, rowCodes...)
 
 		// ENDコード
-		index++
+		g.index++
 
 		// for文で定義したイテレータをPOP
 		vTable = vTable[:len(vTable)-1]
 	}
 
-	return forCodes, index, nil
+	return forCodes, nil
 }

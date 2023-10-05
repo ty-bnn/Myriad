@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// コード生成
+	// Dockerfile生成
 	g := generator.New(p.FuncToCodes)
 	err = g.Generate()
 	if err != nil {
