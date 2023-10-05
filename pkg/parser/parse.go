@@ -238,8 +238,8 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 	var argCodes []codes.Code
 	var err error
 
-	// 変数
-	argName, err := p.variable()
+	// 変数名
+	argName, err := p.variableName()
 	if err != nil {
 		return nil, err
 	}
@@ -259,8 +259,8 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 
 		p.index++
 
-		// 変数
-		argName, err = p.variable()
+		// 変数名
+		argName, err = p.variableName()
 		if err != nil {
 			return nil, err
 		}
@@ -274,20 +274,6 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 	}
 
 	return argCodes, nil
-}
-
-// 変数
-// TODO: 変数いらない、変数名だけで良い
-func (p *Parser) variable() (string, error) {
-	var err error
-
-	// 変数名
-	varName, err := p.variableName()
-	if err != nil {
-		return "", err
-	}
-
-	return varName, nil
 }
 
 // 関数記述部
@@ -487,7 +473,7 @@ func (p *Parser) replaceFormula() (codes.Code, error) {
 	p.index++
 
 	// 置換変数
-	target, err := p.formula()
+	target, err := p.variable()
 	if err != nil {
 		return nil, err
 	}
@@ -522,9 +508,9 @@ func (p *Parser) functionCall() (codes.Code, error) {
 
 	p.index++
 
-	// 式の並び
+	// 変数の並び
 	if p.index < len(p.tokens) && (p.tokens[p.index].Kind == token.STRING || p.tokens[p.index].Kind == token.IDENTIFIER) {
-		args, err = p.rowOfFormulas()
+		args, err = p.rowOfVariables()
 		if err != nil {
 			return nil, err
 		}
@@ -542,12 +528,12 @@ func (p *Parser) functionCall() (codes.Code, error) {
 	return cpCode, nil
 }
 
-// 式の並び
-func (p *Parser) rowOfFormulas() ([]vars.Var, error) {
+// 変数の並び
+func (p *Parser) rowOfVariables() ([]vars.Var, error) {
 	var fmls []vars.Var
 	var err error
-	// 式
-	fml, err := p.formula()
+	// 変数
+	fml, err := p.variable()
 	if err != nil {
 		return fmls, err
 	}
@@ -562,8 +548,8 @@ func (p *Parser) rowOfFormulas() ([]vars.Var, error) {
 
 		p.index++
 
-		// 式
-		fml, err := p.formula()
+		// 変数
+		fml, err := p.variable()
 		if err != nil {
 			return fmls, err
 		}
@@ -618,8 +604,8 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 // 条件判定式
 func (p *Parser) conditionalFormula() (codes.Condition, error) {
 	var err error
-	// 式
-	left, err := p.formula()
+	// 変数
+	left, err := p.variable()
 	if err != nil {
 		return codes.Condition{}, err
 	}
@@ -630,8 +616,8 @@ func (p *Parser) conditionalFormula() (codes.Condition, error) {
 		return codes.Condition{}, err
 	}
 
-	// 式
-	right, err := p.formula()
+	// 変数
+	right, err := p.variable()
 	if err != nil {
 		return codes.Condition{}, err
 	}
@@ -639,8 +625,8 @@ func (p *Parser) conditionalFormula() (codes.Condition, error) {
 	return codes.Condition{Left: left, Right: right, Operator: op}, nil
 }
 
-// 式
-func (p *Parser) formula() (vars.Var, error) {
+// 変数
+func (p *Parser) variable() (vars.Var, error) {
 	var fml vars.Var
 
 	// 文字列でも変数でもない場合
