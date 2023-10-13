@@ -37,14 +37,14 @@ func (t *Tokenizer) Tokenize() error {
 					} else {
 						i, newToken, err = readIdentifier(i, line, row)
 					}
-				case 'e', 'f', 'i', 'm':
+				case 'e', 'f', 'i', 'k', 'm', 'v', 'J':
 					i, newToken, err = readReservedWords(i, line, row)
 					if err != nil {
 						i, newToken, err = readIdentifier(i, line, row)
 					}
 				case '"':
 					i, newToken, err = readString(i, line, row)
-				case '(', ')', ',', '[', ']', '{', '}', '=', '!', ':':
+				case '(', ')', ',', '[', ']', '{', '}', '=', '!', ':', '.':
 					i, newToken, err = readSymbols(i, line, row)
 				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 					i, newToken, err = readNumber(i, line, row)
@@ -116,6 +116,10 @@ func readReservedWords(index int, line string, row int) (int, token.Token, error
 		return index + 3, token.Token{Content: "for", Kind: token.FOR, Line: row + 1}, nil
 	} else if index+2 <= len(line) && line[index:index+2] == "in" && !isAlphabetOrNumber(line, index+2) {
 		return index + 2, token.Token{Content: "in", Kind: token.IN, Line: row + 1}, nil
+	} else if index+4 <= len(line) && line[index:index+4] == "keys" && !isAlphabetOrNumber(line, index+4) {
+		return index + 4, token.Token{Content: "keys", Kind: token.KEYS, Line: row + 1}, nil
+	} else if index+13 <= len(line) && line[index:index+13] == "JsonUnmarshal" && !isAlphabetOrNumber(line, index+13) {
+		return index + 13, token.Token{Content: "JsonUnmarshal", Kind: token.JSONUNMARSHAL, Line: row + 1}, nil
 	}
 
 	return index, token.Token{}, errors.New(fmt.Sprintf("tokenize error: found invalid character in line %d", row))
@@ -136,6 +140,8 @@ func readSymbols(index int, line string, row int) (int, token.Token, error) {
 		return index + 1, token.Token{Content: "{", Kind: token.LBRACE, Line: row + 1}, nil
 	} else if line[index] == '}' {
 		return index + 1, token.Token{Content: "}", Kind: token.RBRACE, Line: row + 1}, nil
+	} else if line[index] == '.' {
+		return index + 1, token.Token{Content: ".", Kind: token.DOT, Line: row + 1}, nil
 	} else if index+2 <= len(line) && line[index:index+2] == "==" {
 		return index + 2, token.Token{Content: "==", Kind: token.EQUAL, Line: row + 1}, nil
 	} else if index+2 <= len(line) && line[index:index+2] == "!=" {
@@ -244,6 +250,15 @@ func readDfArg(index int, line string, row int) (int, []token.Token, error) {
 				}
 
 				tokens = append(tokens, token.Token{Content: line[start:index], Kind: token.IDENTIFIER, Line: row + 1})
+			} else if line[index] == '"' {
+				var newToken token.Token
+				var err error
+				index, newToken, err = readString(index, line, row)
+				if err != nil {
+					return -1, nil, err
+				}
+
+				tokens = append(tokens, newToken)
 			}
 		}
 

@@ -1,15 +1,9 @@
 package vars
 
-type Var interface {
-	GetKind() VarKind
-	GetName() string
+import "github.com/ty-bnn/myriad/pkg/model/values"
+
+// Var will be used in variable table.
+type Var struct {
+	Name  string
+	Value values.Value
 }
-
-type VarKind int
-
-const (
-	SINGLE VarKind = iota
-	ARRAY
-	ELEMENT
-	LITERAL
-)

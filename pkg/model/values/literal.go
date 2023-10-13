@@ -1,11 +1,11 @@
-package vars
+package values
 
 type Literal struct {
-	Kind  VarKind
+	Kind  ValueKind
 	Value string
 }
 
-func (l Literal) GetKind() VarKind {
+func (l Literal) GetKind() ValueKind {
 	return l.Kind
 }
 

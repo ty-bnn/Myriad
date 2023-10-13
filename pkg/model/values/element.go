@@ -1,12 +1,12 @@
-package vars
+package values
 
 type Element struct {
-	Kind  VarKind
+	Kind  ValueKind
 	Name  string
 	Index int
 }
 
-func (e Element) GetKind() VarKind {
+func (e Element) GetKind() ValueKind {
 	return e.Kind
 }
 

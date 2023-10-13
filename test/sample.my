@@ -1,22 +1,14 @@
-hello(package) {
-    if (package == "aaa") {
-        FROM {{package}}
-        RUN {{package}} \
-            aaa
-    } else if (package == "bbb") {
-        FROM {{package}}
-        RUN {{package}} \
-            bbb
-    }
-}
-
 main() {
-    packages := {"aaa", "bbb", "ccc"}
-    for (package in packages) {
-        hello(package)
+    data := JsonUnmarshal("./test/versions.json")
+
+    for (version in data.keys) {
+        versionData := data[version]
+
+        for (variant in versionData["variants"]) {
+            version := "version"
+            CMD {{versionData[version]}}
+        }
     }
 
-    RUN good \
-        morning
     CMD [hfsdf]
 }

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ty-bnn/myriad/pkg/model/codes"
 	"github.com/ty-bnn/myriad/pkg/model/vars"
+
+	"github.com/ty-bnn/myriad/pkg/model/codes"
+	"github.com/ty-bnn/myriad/pkg/model/values"
 )
 
 func (g *Generator) Generate() error {
@@ -41,8 +43,8 @@ func (g *Generator) callFunc(args []string) ([]string, error) {
 			return nil, errors.New(fmt.Sprintf("semantic error: %s got too many args", g.funcPtr))
 		}
 
-		v := funcCodes[g.index].(codes.Define).Var.(vars.Single)
-		v.Value = arg
+		defCode := funcCodes[g.index].(codes.Define)
+		v := vars.Var{Name: defCode.Key, Value: values.Literal{Kind: values.LITERAL, Value: arg}}
 		vTable = append(vTable, v)
 
 		g.index++
@@ -75,17 +77,27 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			g.index++
 		case codes.DEFINE:
 			define := code.(codes.Define)
-			vTable = append(vTable, define.Var)
+			v, err := makeVar(vTable, define.Value, define.Key)
+			if err != nil {
+				return nil, err
+			}
+			vTable = append(vTable, v)
 			g.index++
 		case codes.ASSIGN:
 			assign := code.(codes.Assign)
-			if err := assignVar(vTable, assign.Var); err != nil {
+			v, err := makeVar(vTable, assign.Value, assign.Key)
+			if err != nil {
 				return nil, err
 			}
+			index, err := getIndex(vTable, assign.Key)
+			if err != nil {
+				return nil, err
+			}
+			vTable[index] = v
 			g.index++
 		case codes.REPLACE:
 			rep := code.(codes.Replace)
-			value, err := getValue(vTable, rep.RepVar)
+			value, err := getLiteral(vTable, rep.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -93,14 +105,14 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			g.index++
 		case codes.CALLPROC:
 			callProc := code.(codes.CallProc)
-			var args []string
+			var literals []string
 			for _, arg := range callProc.Args {
-				value, err := getValue(vTable, arg)
+				literal, err := getLiteral(vTable, arg)
 				if err != nil {
 					return nil, err
 				}
 
-				args = append(args, value)
+				literals = append(literals, literal)
 			}
 
 			funcStack := g.funcPtr
@@ -108,7 +120,7 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			indexStack := g.index
 			g.index = 0
 
-			funcRawCodes, err := g.callFunc(args)
+			funcRawCodes, err := g.callFunc(literals)
 			if err != nil {
 				return nil, err
 			}
@@ -257,18 +269,19 @@ func (g *Generator) forBlock(vTable []vars.Var) ([]string, error) {
 	forCode := funcCodes[g.index].(codes.For)
 	g.index++
 
-	array, err := getValues(vTable, forCode.Array)
+	literals, err := getLiterals(vTable, forCode.ArrayValue)
 	if err != nil {
 		return nil, err
 	}
 
 	start := g.index
-	for _, value := range array {
+	itrName := forCode.ItrName
+
+	for _, literal := range literals {
 		var rowCodes []string
 		g.index = start
 
-		forCode.Itr.Value = value
-		vTable = append(vTable, forCode.Itr)
+		vTable = append(vTable, vars.Var{Name: itrName, Value: values.Literal{Kind: values.LITERAL, Value: literal}})
 
 		// コードブロック
 		rowCodes, err = g.codeBlock(vTable)

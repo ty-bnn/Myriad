@@ -1,7 +1,7 @@
 package codes
 
 import (
-	"github.com/ty-bnn/myriad/pkg/model/vars"
+	"github.com/ty-bnn/myriad/pkg/model/values"
 )
 
 type If struct {
@@ -33,7 +33,7 @@ func (e Else) GetKind() CodeKind {
 type OpeKind int
 
 type Condition struct {
-	Left, Right vars.Var
+	Left, Right values.Value
 	Operator    OpeKind
 }
 

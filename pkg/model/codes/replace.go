@@ -1,12 +1,12 @@
 package codes
 
 import (
-	"github.com/ty-bnn/myriad/pkg/model/vars"
+	"github.com/ty-bnn/myriad/pkg/model/values"
 )
 
 type Replace struct {
-	Kind   CodeKind
-	RepVar vars.Var
+	Kind  CodeKind
+	Value values.Value
 }
 
 func (r Replace) GetKind() CodeKind {

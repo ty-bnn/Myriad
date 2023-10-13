@@ -1,13 +1,15 @@
 package parser
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/ty-bnn/myriad/pkg/model/codes"
 	"github.com/ty-bnn/myriad/pkg/model/token"
-	"github.com/ty-bnn/myriad/pkg/model/vars"
+	"github.com/ty-bnn/myriad/pkg/model/values"
 	"github.com/ty-bnn/myriad/pkg/tokenizer"
 	"github.com/ty-bnn/myriad/pkg/utils"
 )
@@ -244,9 +246,10 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 		return nil, err
 	}
 
+	// TODO: Valueをnilのままにしたい
 	defCode := codes.Define{
 		Kind: codes.DEFINE,
-		Var:  vars.Single{Kind: vars.SINGLE, Name: argName},
+		Key:  argName,
 	}
 
 	argCodes = append(argCodes, defCode)
@@ -265,9 +268,10 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 			return nil, err
 		}
 
+		// TODO: Valueをnilのままにしたい
 		defCode = codes.Define{
 			Kind: codes.DEFINE,
-			Var:  vars.Single{Kind: vars.SINGLE, Name: argName},
+			Key:  argName,
 		}
 
 		argCodes = append(argCodes, defCode)
@@ -478,7 +482,7 @@ func (p *Parser) replaceFormula() (codes.Code, error) {
 		return nil, err
 	}
 
-	repCode := codes.Replace{Kind: codes.REPLACE, RepVar: target}
+	repCode := codes.Replace{Kind: codes.REPLACE, Value: target}
 
 	// }}
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RDOUBLEBRA {
@@ -492,7 +496,7 @@ func (p *Parser) replaceFormula() (codes.Code, error) {
 
 // 関数呼び出し文
 func (p *Parser) functionCall() (codes.Code, error) {
-	var args []vars.Var
+	var args []values.Value
 	var err error
 
 	// 関数名
@@ -529,16 +533,16 @@ func (p *Parser) functionCall() (codes.Code, error) {
 }
 
 // 変数の並び
-func (p *Parser) rowOfVariables() ([]vars.Var, error) {
-	var fmls []vars.Var
+func (p *Parser) rowOfVariables() ([]values.Value, error) {
+	var values []values.Value
 	var err error
 	// 変数
 	fml, err := p.variable()
 	if err != nil {
-		return fmls, err
+		return values, err
 	}
 
-	fmls = append(fmls, fml)
+	values = append(values, fml)
 
 	for {
 		// ","
@@ -551,13 +555,13 @@ func (p *Parser) rowOfVariables() ([]vars.Var, error) {
 		// 変数
 		fml, err := p.variable()
 		if err != nil {
-			return fmls, err
+			return values, err
 		}
 
-		fmls = append(fmls, fml)
+		values = append(values, fml)
 	}
 
-	return fmls, nil
+	return values, nil
 }
 
 // ifブロック
@@ -626,50 +630,47 @@ func (p *Parser) conditionalFormula() (codes.Condition, error) {
 }
 
 // 変数
-func (p *Parser) variable() (vars.Var, error) {
-	var fml vars.Var
-
+func (p *Parser) variable() (values.Value, error) {
 	// 文字列でも変数でもない場合
 	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.STRING && p.tokens[p.index].Kind != token.IDENTIFIER) {
-		return fml, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
 	}
 
 	// 文字列
 	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.STRING {
-		fml = vars.Literal{Kind: vars.LITERAL, Value: p.tokens[p.index].Content}
+		value := p.tokens[p.index].Content
 		p.index++
-		return fml, nil
+		return values.Literal{Kind: values.LITERAL, Value: value}, nil
 	}
-
-	// 変数 | 配列要素
-	name := p.tokens[p.index].Content
-	p.index++
 
 	// [
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACKET {
-		return vars.Single{Kind: vars.SINGLE, Name: name}, nil
-	}
-	p.index++
-
-	// 数字
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.NUMBER {
-		return fml, errors.New(fmt.Sprintf("syntax error: cannot find a number"))
+	if p.index+1 >= len(p.tokens) || p.tokens[p.index+1].Kind != token.LBRACKET {
+		name := p.tokens[p.index].Content
+		p.index++
+		return values.Ident{Kind: values.IDENT, Name: name}, nil
 	}
 
-	index, err := strconv.Atoi(p.tokens[p.index].Content)
-	if err != nil {
-		return fml, err
+	if p.index+2 >= len(p.tokens) || (p.tokens[p.index+2].Kind != token.NUMBER && p.tokens[p.index+2].Kind != token.IDENTIFIER && p.tokens[p.index+2].Kind != token.STRING) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find a number, identifier or string"))
 	}
 
-	p.index++
-
-	// ]
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACKET {
-		return fml, errors.New(fmt.Sprintf("syntax error: cannot find a right bracket"))
+	var value values.Value
+	var err error
+	if p.tokens[p.index+2].Kind == token.NUMBER {
+		// 配列要素
+		value, err = p.arrayElement()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.tokens[p.index+2].Kind == token.IDENTIFIER || p.tokens[p.index+2].Kind == token.STRING {
+		// mapバリュー
+		value, err = p.mapValue()
+		if err != nil {
+			return nil, err
+		}
 	}
-	p.index++
 
-	return vars.Element{Kind: vars.ELEMENT, Name: name, Index: index}, nil
+	return value, nil
 }
 
 // 比較演算子
@@ -709,12 +710,12 @@ func (p *Parser) defineVariable() (codes.Code, error) {
 
 	p.index++
 
-	variable, err := p.assignValue(vName)
+	value, err := p.assignValue()
 	if err != nil {
 		return nil, err
 	}
 
-	defCode := codes.Define{Kind: codes.DEFINE, Var: variable}
+	defCode := codes.Define{Kind: codes.DEFINE, Key: vName, Value: value}
 
 	return defCode, nil
 }
@@ -736,37 +737,56 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 
 	p.index++
 
-	variable, err := p.assignValue(vName)
+	value, err := p.assignValue()
 	if err != nil {
 		return nil, err
 	}
 
-	defCode := codes.Assign{Kind: codes.ASSIGN, Var: variable}
+	defCode := codes.Assign{Kind: codes.ASSIGN, Key: vName, Value: value}
 
 	return defCode, nil
 }
 
 // 代入値
-func (p *Parser) assignValue(vName string) (vars.Var, error) {
-	var variable vars.Var
-	// 文字列
+func (p *Parser) assignValue() (values.Value, error) {
+	var value values.Value
 	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.STRING {
-		variable = vars.Single{Kind: vars.SINGLE, Name: vName, Value: p.tokens[p.index].Content}
-
+		// 文字列
+		value = values.Literal{Kind: values.LITERAL, Value: p.tokens[p.index].Content}
 		p.index++
-		// 配列
 	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.LBRACE {
-		array, err := p.array()
+		// 配列
+		arrayValues, err := p.array()
 		if err != nil {
 			return nil, err
 		}
-
-		variable = vars.Array{Kind: vars.ARRAY, Name: vName, Values: array}
+		value = values.Literals{Kind: values.LITERALS, Values: arrayValues}
+	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.JSONUNMARSHAL {
+		// JsonUnmarshal
+		jsonData, err := p.jsonUnmarshal()
+		if err != nil {
+			return nil, err
+		}
+		value = values.Map{Kind: values.MAP, Value: jsonData}
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.DOT {
+		// mapキー
+		var err error
+		value, err = p.mapKey()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.LBRACKET {
+		// mapバリュー
+		var err error
+		value, err = p.mapValue()
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find string or '{'"))
 	}
 
-	return variable, nil
+	return value, nil
 }
 
 // 配列
@@ -780,9 +800,9 @@ func (p *Parser) array() ([]string, error) {
 
 	p.index++
 
-	array, err := p.rowOfStrings()
+	arrayValues, err := p.rowOfStrings()
 	if err != nil {
-		return array, err
+		return arrayValues, err
 	}
 
 	// }
@@ -792,7 +812,45 @@ func (p *Parser) array() ([]string, error) {
 
 	p.index++
 
-	return array, nil
+	return arrayValues, nil
+}
+
+// 配列要素
+func (p *Parser) arrayElement() (values.Element, error) {
+	// 変数名
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IDENTIFIER {
+		return values.Element{}, errors.New(fmt.Sprintf("syntax error: cannot find identifier"))
+	}
+
+	name := p.tokens[p.index].Content
+	p.index++
+
+	// [
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACKET {
+		return values.Element{}, errors.New(fmt.Sprintf("syntax error: cannot find left bracket"))
+	}
+
+	p.index++
+
+	// 数字
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.NUMBER {
+		return values.Element{}, errors.New(fmt.Sprintf("syntax error: cannot find number"))
+	}
+
+	index, err := strconv.Atoi(p.tokens[p.index].Content)
+	if err != nil {
+		return values.Element{}, err
+	}
+	p.index++
+
+	// [
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACKET {
+		return values.Element{}, errors.New(fmt.Sprintf("syntax error: cannot find right bracket"))
+	}
+
+	p.index++
+
+	return values.Element{Kind: values.ELEMENT, Name: name, Index: index}, nil
 }
 
 // 文字列の並び
@@ -801,7 +859,7 @@ func (p *Parser) rowOfStrings() ([]string, error) {
 
 	// 文字列
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.STRING {
-		return strings, errors.New(fmt.Sprintf("syntax error: cannot find string"))
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find string"))
 	}
 
 	strings = append(strings, p.tokens[p.index].Content)
@@ -827,6 +885,106 @@ func (p *Parser) rowOfStrings() ([]string, error) {
 	}
 
 	return strings, nil
+}
+
+// Json読み取り
+func (p *Parser) jsonUnmarshal() (map[string]interface{}, error) {
+	// JsonUnmarshal
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.JSONUNMARSHAL {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find JsonUnmarshal"))
+	}
+	p.index++
+
+	// (
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ("))
+	}
+	p.index++
+
+	// 文字列
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.STRING {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find string"))
+	}
+
+	fileName := p.tokens[p.index].Content
+	bytes, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to open %s", fileName))
+	}
+
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(bytes, &jsonData); err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to unmarshal %s", fileName))
+	}
+
+	p.index++
+
+	// )
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find )"))
+	}
+	p.index++
+
+	return jsonData, nil
+}
+
+// mapキー
+func (p *Parser) mapKey() (values.MapKey, error) {
+	// 変数名
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IDENTIFIER {
+		return values.MapKey{}, errors.New(fmt.Sprintf("syntax error: cannot find identifier"))
+	}
+
+	name := p.tokens[p.index].Content
+	p.index++
+
+	// .
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.DOT {
+		return values.MapKey{}, errors.New(fmt.Sprintf("syntax error: cannot find ."))
+	}
+
+	p.index++
+
+	// keys
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.KEYS {
+		return values.MapKey{}, errors.New(fmt.Sprintf("syntax error: cannot find keys"))
+	}
+
+	p.index++
+
+	return values.MapKey{Kind: values.MAPKEY, Name: name}, nil
+}
+
+// mapバリュー
+func (p *Parser) mapValue() (values.MapValue, error) {
+	// 変数名
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IDENTIFIER {
+		return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find identifier"))
+	}
+
+	name := p.tokens[p.index].Content
+	p.index++
+
+	// [
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACKET {
+		return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find left bracket"))
+	}
+
+	p.index++
+
+	v, err := p.variable()
+	if err != nil {
+		return values.MapValue{}, err
+	}
+
+	// [
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACKET {
+		return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find right bracket"))
+	}
+
+	p.index++
+
+	return values.MapValue{Kind: values.MAPVALUE, Name: name, Key: v}, nil
 }
 
 // if節
@@ -1026,8 +1184,6 @@ func (p *Parser) forBlock() ([]codes.Code, error) {
 		return nil, err
 	}
 
-	itrVar := vars.Single{Kind: vars.SINGLE, Name: itrName}
-
 	// "in"
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IN {
 		return nil, errors.New(fmt.Sprintf("syntax errir: cannot find 'in'"))
@@ -1035,13 +1191,24 @@ func (p *Parser) forBlock() ([]codes.Code, error) {
 
 	p.index++
 
-	// 変数名
-	arrayName, err := p.variableName()
-	if err != nil {
-		return nil, err
+	var value values.Value
+	if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.DOT {
+		value, err = p.mapKey()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.LBRACKET {
+		value, err = p.mapValue()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		vName, err := p.variableName()
+		if err != nil {
+			return nil, err
+		}
+		value = values.Ident{Kind: values.IDENT, Name: vName}
 	}
-
-	arrayVar := vars.Array{Kind: vars.ARRAY, Name: arrayName}
 
 	// ")"
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
@@ -1050,7 +1217,7 @@ func (p *Parser) forBlock() ([]codes.Code, error) {
 
 	p.index++
 
-	forCode := codes.For{Kind: codes.FOR, Itr: itrVar, Array: arrayVar}
+	forCode := codes.For{Kind: codes.FOR, ItrName: itrName, ArrayValue: value}
 	forCodes = append(forCodes, forCode)
 
 	// "{"
