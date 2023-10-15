@@ -1,14 +1,6 @@
 main() {
-    data := JsonUnmarshal("./test/versions.json")
-
-    for (version in data.keys) {
-        versionData := data[version]
-
-        for (variant in versionData["variants"]) {
-            version := "version"
-            CMD {{versionData[version]}}
-        }
+    huga := "aaa"
+    if ((huga == "aaa" || huga == "bbb") || huga == "ccc") {
+        RUN {{huga}}
     }
-
-    CMD [hfsdf]
 }

@@ -193,7 +193,7 @@ func (g *Generator) ifSection(vTable []vars.Var) ([]string, error) {
 
 	// IFコード
 	ifCode := funcCodes[g.index].(codes.If)
-	ok, err := getConditionEval(vTable, ifCode.Condition)
+	ok, err := evalCondition(vTable, ifCode.Condition)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (g *Generator) elifSection(vTable []vars.Var) ([]string, error) {
 
 	// ELIFコード
 	elifCode := funcCodes[g.index].(codes.Elif)
-	ok, err := getConditionEval(vTable, elifCode.Condition)
+	ok, err := evalCondition(vTable, elifCode.Condition)
 	if err != nil {
 		return nil, err
 	}

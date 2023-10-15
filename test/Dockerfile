@@ -1,7 +1,1 @@
-CMD 18.0.1
-CMD 18.0.1
-CMD 18.0.1
-CMD 19.0.2
-CMD 19.0.2
-CMD 19.0.2
-CMD [hfsdf]
+RUN aaa

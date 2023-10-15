@@ -44,7 +44,7 @@ func (t *Tokenizer) Tokenize() error {
 					}
 				case '"':
 					i, newToken, err = readString(i, line, row)
-				case '(', ')', ',', '[', ']', '{', '}', '=', '!', ':', '.':
+				case '(', ')', ',', '[', ']', '{', '}', '=', '!', ':', '.', '&', '|':
 					i, newToken, err = readSymbols(i, line, row)
 				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 					i, newToken, err = readNumber(i, line, row)
@@ -150,6 +150,10 @@ func readSymbols(index int, line string, row int) (int, token.Token, error) {
 		return index + 2, token.Token{Content: ":=", Kind: token.DEFINE, Line: row + 1}, nil
 	} else if line[index] == '=' {
 		return index + 1, token.Token{Content: "=", Kind: token.ASSIGN, Line: row + 1}, nil
+	} else if index+2 <= len(line) && line[index:index+2] == "&&" {
+		return index + 2, token.Token{Content: "&&", Kind: token.AND, Line: row + 1}, nil
+	} else if index+2 <= len(line) && line[index:index+2] == "||" {
+		return index + 2, token.Token{Content: "||", Kind: token.OR, Line: row + 1}, nil
 	}
 
 	return index, token.Token{}, errors.New(fmt.Sprintf("Symbols'index: %d find invalid character in \"%s\".", index, line))

@@ -606,27 +606,118 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 }
 
 // 条件判定式
-func (p *Parser) conditionalFormula() (codes.Condition, error) {
+func (p *Parser) conditionalFormula() (*codes.ConditionalNode, error) {
+	// 項
+	root, err := p.term()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.index < len(p.tokens) && p.tokens[p.index].Kind == token.OR {
+		// ||
+		p.index++
+
+		// 項
+		rNode, err := p.term()
+		if err != nil {
+			return nil, err
+		}
+
+		newRoot := codes.ConditionalNode{
+			Operator: codes.OR,
+			Left:     root,
+			Right:    rNode,
+		}
+
+		root = &newRoot
+	}
+
+	return root, nil
+}
+
+// 項
+func (p *Parser) term() (*codes.ConditionalNode, error) {
+	// 因子
+	root, err := p.factor()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.index < len(p.tokens) && p.tokens[p.index].Kind == token.AND {
+		// &&
+		p.index++
+
+		// 因子
+		rNode, err := p.factor()
+		if err != nil {
+			return nil, err
+		}
+
+		newRoot := codes.ConditionalNode{
+			Operator: codes.AND,
+			Left:     root,
+			Right:    rNode,
+		}
+
+		root = &newRoot
+	}
+
+	return root, nil
+}
+
+// 因子
+func (p *Parser) factor() (*codes.ConditionalNode, error) {
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.LPAREN {
+		// (
+		p.index++
+
+		// 条件判定式
+		condFml, err := p.conditionalFormula()
+		if err != nil {
+			return nil, err
+		}
+
+		// )
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
+			return nil, errors.New(fmt.Sprintf("syntax error: cannot find )"))
+		}
+		p.index++
+
+		return condFml, nil
+	}
+
+	compFml, err := p.compFormula()
+	if err != nil {
+		return nil, err
+	}
+
+	return compFml, nil
+}
+
+// 比較式
+func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 	var err error
 	// 変数
 	left, err := p.variable()
 	if err != nil {
-		return codes.Condition{}, err
+		return nil, err
 	}
+	lNode := codes.ConditionalNode{Var: left}
 
 	// 比較演算子
 	op, err := p.conditionalOperator()
 	if err != nil {
-		return codes.Condition{}, err
+		return nil, err
 	}
 
 	// 変数
 	right, err := p.variable()
 	if err != nil {
-		return codes.Condition{}, err
+		return nil, err
 	}
+	rNode := codes.ConditionalNode{Var: right}
 
-	return codes.Condition{Left: left, Right: right, Operator: op}, nil
+	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode}, nil
 }
 
 // 変数
@@ -674,8 +765,8 @@ func (p *Parser) variable() (values.Value, error) {
 }
 
 // 比較演算子
-func (p *Parser) conditionalOperator() (codes.OpeKind, error) {
-	var op codes.OpeKind
+func (p *Parser) conditionalOperator() (codes.OperatorKind, error) {
+	var op codes.OperatorKind
 
 	// "==", "!="
 	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.EQUAL && p.tokens[p.index].Kind != token.NOTEQUAL) {
@@ -1014,7 +1105,7 @@ func (p *Parser) ifSection() ([]codes.Code, error) {
 		return nil, err
 	}
 
-	ifCode := codes.If{Kind: codes.IF, Condition: condition}
+	ifCode := codes.If{Kind: codes.IF, Condition: *condition}
 	ifCodes = append(ifCodes, ifCode)
 
 	// ")"
@@ -1079,7 +1170,7 @@ func (p *Parser) elifSection() ([]codes.Code, error) {
 		return nil, err
 	}
 
-	elifCode := codes.Elif{Kind: codes.ELIF, Condition: condition}
+	elifCode := codes.Elif{Kind: codes.ELIF, Condition: *condition}
 	elifCodes = append(elifCodes, elifCode)
 
 	// ")"

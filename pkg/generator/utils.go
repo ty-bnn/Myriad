@@ -10,20 +10,44 @@ import (
 	"github.com/ty-bnn/myriad/pkg/model/values"
 )
 
-func getConditionEval(vTable []vars.Var, condition codes.Condition) (bool, error) {
-	left, err := getLiteral(vTable, condition.Left)
+func evalCondition(vTable []vars.Var, root codes.ConditionalNode) (bool, error) {
+	if root.Operator == codes.EQUAL || root.Operator == codes.NOTEQUAL {
+		eq, err := isEqual(vTable, root)
+		if err != nil {
+			return false, err
+		}
+		return eq, nil
+	}
+
+	lEq, err := evalCondition(vTable, *root.Left)
 	if err != nil {
 		return false, err
 	}
 
-	right, err := getLiteral(vTable, condition.Right)
+	rEq, err := evalCondition(vTable, *root.Right)
 	if err != nil {
 		return false, err
 	}
 
-	if condition.Operator == codes.EQUAL && left == right {
-		return true, nil
-	} else if condition.Operator == codes.NOTEQUAL && left != right {
+	if root.Operator == codes.OR {
+		return lEq || rEq, nil
+	}
+
+	return lEq && rEq, nil
+}
+
+func isEqual(vTable []vars.Var, node codes.ConditionalNode) (bool, error) {
+	left, err := getLiteral(vTable, node.Left.Var)
+	if err != nil {
+		return false, err
+	}
+
+	right, err := getLiteral(vTable, node.Right.Var)
+	if err != nil {
+		return false, err
+	}
+
+	if (node.Operator == codes.EQUAL && left == right) || (node.Operator == codes.NOTEQUAL && left != right) {
 		return true, nil
 	}
 
