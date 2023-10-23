@@ -256,3 +256,12 @@ func assertionToStringSlice(target interface{}) ([]string, bool) {
 
 	return strings, true
 }
+
+func whiteSpaces(word string) string {
+	var spaces string
+	for i := 0; i < len(word)+1; i++ {
+		spaces += " "
+	}
+
+	return spaces
+}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ty-bnn/myriad/pkg/model/vars"
 
@@ -70,10 +71,17 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 		case codes.LITERAL:
 			literal := code.(codes.Literal)
 			rawCodes = append(rawCodes, literal.Content)
+			// 末尾が'\', '\n'で終わっているか確認
+			trimmed := strings.Replace(literal.Content, " ", "", -1)
+			if 0 < len(trimmed) && trimmed[len(trimmed)-2:] == "\\\n" {
+				rawCodes = append(rawCodes, whiteSpaces(g.commandPtr))
+			}
 			g.index++
 		case codes.COMMAND:
 			command := code.(codes.Command)
 			rawCodes = append(rawCodes, command.Content)
+			g.commandPtr = command.Content
+			rawCodes = append(rawCodes, " ")
 			g.index++
 		case codes.DEFINE:
 			define := code.(codes.Define)

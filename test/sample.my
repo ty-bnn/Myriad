@@ -1,6 +1,13 @@
 main() {
-    huga := "aaa"
-    if ((huga == "aaa" || huga == "bbb") || huga == "ccc") {
-        RUN {{huga}}
+    {{-
+        FROM ubuntu:latest
+        COPY aaa aaa
+        RUN go build -o . \
+            aaa
+    -}}
+
+    package := "curl"
+    if(package == "curl") {
+        {{- {{package}} -}}
     }
 }

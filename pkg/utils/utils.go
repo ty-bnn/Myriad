@@ -1,19 +1,17 @@
 package utils
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 )
 
-func ReadLinesFromFile(samplePath string) ([]string, error) {
-	var lines []string
-
+func ReadLinesFromFile(samplePath string) (string, error) {
 	// Open file.
 	fp, err := os.Open(samplePath)
 	if err != nil {
-		return []string{}, errors.New(fmt.Sprintf("cannot open %s", samplePath))
+		return "", errors.New(fmt.Sprintf("cannot open %s", samplePath))
 	}
 	defer func() {
 		if err := fp.Close(); err != nil {
@@ -22,15 +20,12 @@ func ReadLinesFromFile(samplePath string) ([]string, error) {
 	}()
 
 	// Read sample codes line by line.
-	scanner := bufio.NewScanner(fp)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err = scanner.Err(); err != nil {
-		return []string{}, errors.New(fmt.Sprintf("cannot read %s", samplePath))
+	data, err := io.ReadAll(fp)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("cannot read %s", samplePath))
 	}
 
-	return lines, nil
+	return string(data), nil
 }
 
 func WriteFile(codes []string, filePath string) error {

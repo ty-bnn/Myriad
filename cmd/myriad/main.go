@@ -12,14 +12,14 @@ import (
 
 func main() {
 	// Myriadファイルから全ての行を読む
-	lines, err := utils.ReadLinesFromFile(os.Args[1])
+	data, err := utils.ReadLinesFromFile(os.Args[1])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// トークナイズ
-	t := tokenizer.New(lines)
+	t := tokenizer.New(data)
 	err = t.Tokenize()
 	if err != nil {
 		fmt.Println(err)

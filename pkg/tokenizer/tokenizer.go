@@ -3,10 +3,14 @@ package tokenizer
 import "github.com/ty-bnn/myriad/pkg/model/token"
 
 type Tokenizer struct {
-	lines  []string
-	Tokens []token.Token
+	data        string
+	p           int
+	isInDfBlock bool
+	isInCommand bool
+	commandPtr  string
+	Tokens      []token.Token
 }
 
-func New(lines []string) *Tokenizer {
-	return &Tokenizer{lines: lines}
+func New(data string) *Tokenizer {
+	return &Tokenizer{data: data}
 }

@@ -322,7 +322,7 @@ func (p *Parser) description() ([]codes.Code, error) {
 	descCodes = append(descCodes, descBCodes...)
 
 	for {
-		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFCOMMAND && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.IDENTIFIER && p.tokens[p.index].Kind != token.IF && p.tokens[p.index].Kind != token.FOR) {
+		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFBEGIN && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.IDENTIFIER && p.tokens[p.index].Kind != token.IF && p.tokens[p.index].Kind != token.FOR) {
 			break
 		}
 
@@ -339,9 +339,9 @@ func (p *Parser) description() ([]codes.Code, error) {
 
 // 記述ブロック
 func (p *Parser) descriptionBlock() ([]codes.Code, error) {
-	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.DFCOMMAND || p.tokens[p.index].Kind == token.DFARG {
-		// Dfile文
-		dockerCodes, err := p.dockerFile()
+	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.DFBEGIN {
+		// Dfileブロック
+		dockerCodes, err := p.dockerfileBlock()
 		if err != nil {
 			return nil, err
 		}
@@ -392,15 +392,43 @@ func (p *Parser) descriptionBlock() ([]codes.Code, error) {
 	return nil, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
 }
 
+// Dfileブロック
+func (p *Parser) dockerfileBlock() ([]codes.Code, error) {
+	var dockerBlockCodes []codes.Code
+
+	// {{-
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.DFBEGIN {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{{-'"))
+	}
+	p.index++
+
+	for {
+		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFCOMMAND && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.LDOUBLEBRA) {
+			break
+		}
+
+		dockerCodes, err := p.dockerFile()
+		if err != nil {
+			return nil, err
+		}
+		dockerBlockCodes = append(dockerBlockCodes, dockerCodes...)
+	}
+
+	// -}}
+	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.DFEND {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '-}}'"))
+	}
+	p.index++
+
+	return dockerBlockCodes, nil
+}
+
 // Dfile文
 func (p *Parser) dockerFile() ([]codes.Code, error) {
 	var dockerCodes []codes.Code
 	var err error
-	// Df命令
-	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFCOMMAND && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.LDOUBLEBRA) {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find a Dockerfile comamnd"))
-	}
 
+	// Df命令
 	if p.tokens[p.index].Kind == token.DFCOMMAND {
 		cmdCode := codes.Command{Kind: codes.COMMAND, Content: p.tokens[p.index].Content}
 		dockerCodes = append(dockerCodes, cmdCode)

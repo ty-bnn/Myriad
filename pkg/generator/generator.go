@@ -9,6 +9,7 @@ type Generator struct {
 	RawCodes    []string
 	funcPtr     string
 	index       int
+	commandPtr  string
 }
 
 func New(funcToCodes map[string][]codes.Code) *Generator {
