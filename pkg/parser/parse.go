@@ -501,15 +501,12 @@ func (p *Parser) replaceFormula() (codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LDOUBLEBRA {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{{'"))
 	}
-
 	p.index++
 
-	// 置換変数
-	target, err := p.singleAssignValue()
+	target, err := p.singleAssignFormula()
 	if err != nil {
 		return nil, err
 	}
-
 	repCode := codes.Replace{Kind: codes.REPLACE, Value: target}
 
 	// }}
@@ -722,7 +719,7 @@ func (p *Parser) factor() (*codes.ConditionalNode, error) {
 // 比較式
 func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 	var err error
-	left, err := p.singleAssignValue()
+	left, err := p.singleAssignFormula()
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +730,7 @@ func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 		return nil, err
 	}
 
-	right, err := p.singleAssignValue()
+	right, err := p.singleAssignFormula()
 	if err != nil {
 		return nil, err
 	}
@@ -817,14 +814,40 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 // 代入値
 func (p *Parser) assignValue() (values.Value, error) {
 	if p.tokenIs(token.LBRACE, 0) || p.tokenIs(token.JSONUNMARSHAL, 0) || (p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOT, 1)) {
-		// 複合代入値
 		value, err := p.complexAssignValue()
 		return value, err
 	}
 
-	// 単一代入値
-	value, err := p.singleAssignValue()
+	value, err := p.singleAssignFormula()
 	return value, err
+}
+
+// 単一代入式
+func (p *Parser) singleAssignFormula() (values.Value, error) {
+	value, err := p.singleAssignValue()
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.tokenIs(token.PLUS, 0) {
+		return value, nil
+	}
+
+	var vls []values.Value
+	vls = append(vls, value)
+
+	for p.tokenIs(token.PLUS, 0) {
+		// +
+		p.index++
+
+		value, err = p.singleAssignValue()
+		if err != nil {
+			return nil, err
+		}
+		vls = append(vls, value)
+	}
+
+	return values.AddString{Kind: values.ADDSTRING, Values: vls}, nil
 }
 
 // 単一代入値
@@ -1046,7 +1069,7 @@ func (p *Parser) mapValue() (values.MapValue, error) {
 
 	p.index++
 
-	v, err := p.singleAssignValue()
+	v, err := p.singleAssignFormula()
 	if err != nil {
 		return values.MapValue{}, err
 	}

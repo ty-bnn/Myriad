@@ -15,4 +15,5 @@ const (
 	MAPKEY
 	MAPVALUE
 	IDENT
+	ADDSTRING
 )

@@ -63,6 +63,18 @@ func getLiteral(vTable []vars.Var, target values.Value) (string, error) {
 		return target.(values.Literal).Value, nil
 	}
 
+	if target.GetKind() == values.ADDSTRING {
+		var literals string
+		for _, value := range target.(values.AddString).Values {
+			literal, err := getLiteral(vTable, value)
+			if err != nil {
+				return "", err
+			}
+			literals += literal
+		}
+		return literals, nil
+	}
+
 	for i := len(vTable) - 1; i >= 0; i-- {
 		if vTable[i].Name != target.GetName() {
 			continue

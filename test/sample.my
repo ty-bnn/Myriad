@@ -1,16 +1,12 @@
-hello(p) {
-    {{-
-        RUN {{p[0]}}
-    -}}
-}
-
 main() {
     {{-
         FROM ubuntu:latest
         COPY aaa aaa
-        RUN go build -o .
+        RUN go build -o . \
     -}}
 
-    packages := {"aaa", "bbb", "ccc"}
-    hello(packages)
+    data := JsonUnmarshal("./test/versions.json")
+    versionData := data["18"]
+    aaa := "./" + "hello/ " + versionData["version"]
+    {{- {{aaa}} -}}
 }

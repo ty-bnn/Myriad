@@ -123,6 +123,9 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 		content := t.data[start:t.p]
 		t.p++
 		return token.Token{Kind: token.STRING, Content: content}, nil
+	case '+':
+		t.p++
+		return token.Token{Kind: token.PLUS, Content: "+"}, nil
 	default:
 		if isWhiteSpace(t.data[t.p]) || isNewLine(t.data[t.p]) {
 			t.p++
