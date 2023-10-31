@@ -139,7 +139,7 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 			for t.p < len(t.data) && isDigit(t.data[t.p]) {
 				t.p++
 			}
-			return token.Token{Kind: token.NUMBER, Content: t.data[start:]}, nil
+			return token.Token{Kind: token.NUMBER, Content: t.data[start:t.p]}, nil
 		} else {
 			return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token %b", t.data[t.p]))
 		}

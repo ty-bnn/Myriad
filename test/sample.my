@@ -1,13 +1,16 @@
+hello(p) {
+    {{-
+        RUN {{p[0]}}
+    -}}
+}
+
 main() {
     {{-
         FROM ubuntu:latest
         COPY aaa aaa
-        RUN go build -o . \
-            aaa
+        RUN go build -o .
     -}}
 
-    package := "curl"
-    if(package == "curl") {
-        {{- {{package}} -}}
-    }
+    packages := {"aaa", "bbb", "ccc"}
+    hello(packages)
 }

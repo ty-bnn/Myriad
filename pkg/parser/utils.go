@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ty-bnn/myriad/pkg/model/token"
+
 	"github.com/ty-bnn/myriad/pkg/model/codes"
 )
 
@@ -27,4 +29,12 @@ func (p *Parser) addFuncCodes(funcToCodes map[string][]codes.Code) error {
 	}
 
 	return nil
+}
+
+func (p *Parser) tokenIs(kind token.TokenKind, offset int) bool {
+	index := p.index + offset
+	if index >= len(p.tokens) {
+		return false
+	}
+	return p.tokens[index].Kind == kind
 }

@@ -39,15 +39,16 @@ const (
 )
 
 var ReservedKeywords = map[string]TokenKind{
-	"import":  IMPORT,
-	"from":    FROM,
-	"main":    MAIN,
-	"if":      IF,
-	"else if": ELIF,
-	"else":    ELSE,
-	"for":     FOR,
-	"in":      IN,
-	"keys":    KEYS,
+	"import":        IMPORT,
+	"from":          FROM,
+	"main":          MAIN,
+	"if":            IF,
+	"else if":       ELIF,
+	"else":          ELSE,
+	"for":           FOR,
+	"in":            IN,
+	"keys":          KEYS,
+	"JsonUnmarshal": JSONUNMARSHAL,
 }
 
 var DockerfileCommands = map[string]bool{

@@ -208,24 +208,24 @@ func getMap(vTable []vars.Var, target values.Value) (map[string]interface{}, err
 	return nil, errors.New(fmt.Sprintf("semantic error: %s is not declared", target.GetName()))
 }
 
-func makeVar(vTable []vars.Var, value values.Value, vName string) (vars.Var, error) {
+func getValue(vTable []vars.Var, value values.Value) (values.Value, error) {
 	// getLiteral, getLiterals, getMapを順に回していき、適切なvalueを探す
 	literal, err := getLiteral(vTable, value)
 	if err == nil {
-		return vars.Var{Name: vName, Value: values.Literal{Kind: values.LITERAL, Value: literal}}, nil
+		return values.Literal{Kind: values.LITERAL, Value: literal}, nil
 	}
 
 	literals, err := getLiterals(vTable, value)
 	if err == nil {
-		return vars.Var{Name: vName, Value: values.Literals{Kind: values.LITERALS, Values: literals}}, nil
+		return values.Literals{Kind: values.LITERALS, Values: literals}, nil
 	}
 
 	mapLiteral, err := getMap(vTable, value)
 	if err == nil {
-		return vars.Var{Name: vName, Value: values.Map{Kind: values.MAP, Value: mapLiteral}}, nil
+		return values.Map{Kind: values.MAP, Value: mapLiteral}, nil
 	}
 
-	return vars.Var{}, err
+	return nil, err
 }
 
 func getIndex(vTable []vars.Var, vName string) (int, error) {

@@ -505,7 +505,7 @@ func (p *Parser) replaceFormula() (codes.Code, error) {
 	p.index++
 
 	// 置換変数
-	target, err := p.variable()
+	target, err := p.singleAssignValue()
 	if err != nil {
 		return nil, err
 	}
@@ -540,9 +540,10 @@ func (p *Parser) functionCall() (codes.Code, error) {
 
 	p.index++
 
-	// 変数の並び
-	if p.index < len(p.tokens) && (p.tokens[p.index].Kind == token.STRING || p.tokens[p.index].Kind == token.IDENTIFIER) {
-		args, err = p.rowOfVariables()
+	// 代入値の並び
+	if p.index < len(p.tokens) && (p.tokens[p.index].Kind == token.STRING || p.tokens[p.index].Kind == token.IDENTIFIER ||
+		p.tokens[p.index].Kind == token.LBRACE || p.tokens[p.index].Kind == token.JSONUNMARSHAL) {
+		args, err = p.rowOfAssignValues()
 		if err != nil {
 			return nil, err
 		}
@@ -560,33 +561,29 @@ func (p *Parser) functionCall() (codes.Code, error) {
 	return cpCode, nil
 }
 
-// 変数の並び
-func (p *Parser) rowOfVariables() ([]values.Value, error) {
+// 代入値の並び
+func (p *Parser) rowOfAssignValues() ([]values.Value, error) {
 	var values []values.Value
 	var err error
-	// 変数
-	fml, err := p.variable()
+	// 代入値
+	value, err := p.assignValue()
 	if err != nil {
-		return values, err
+		return nil, err
 	}
-
-	values = append(values, fml)
+	values = append(values, value)
 
 	for {
 		// ","
 		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.COMMA {
 			break
 		}
-
 		p.index++
-
-		// 変数
-		fml, err := p.variable()
+		// 代入値
+		value, err := p.assignValue()
 		if err != nil {
 			return values, err
 		}
-
-		values = append(values, fml)
+		values = append(values, value)
 	}
 
 	return values, nil
@@ -725,71 +722,24 @@ func (p *Parser) factor() (*codes.ConditionalNode, error) {
 // 比較式
 func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 	var err error
-	// 変数
-	left, err := p.variable()
+	left, err := p.singleAssignValue()
 	if err != nil {
 		return nil, err
 	}
 	lNode := codes.ConditionalNode{Var: left}
 
-	// 比較演算子
 	op, err := p.conditionalOperator()
 	if err != nil {
 		return nil, err
 	}
 
-	// 変数
-	right, err := p.variable()
+	right, err := p.singleAssignValue()
 	if err != nil {
 		return nil, err
 	}
 	rNode := codes.ConditionalNode{Var: right}
 
 	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode}, nil
-}
-
-// 変数
-func (p *Parser) variable() (values.Value, error) {
-	// 文字列でも変数でもない場合
-	if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.STRING && p.tokens[p.index].Kind != token.IDENTIFIER) {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find a formula"))
-	}
-
-	// 文字列
-	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.STRING {
-		value := p.tokens[p.index].Content
-		p.index++
-		return values.Literal{Kind: values.LITERAL, Value: value}, nil
-	}
-
-	// [
-	if p.index+1 >= len(p.tokens) || p.tokens[p.index+1].Kind != token.LBRACKET {
-		name := p.tokens[p.index].Content
-		p.index++
-		return values.Ident{Kind: values.IDENT, Name: name}, nil
-	}
-
-	if p.index+2 >= len(p.tokens) || (p.tokens[p.index+2].Kind != token.NUMBER && p.tokens[p.index+2].Kind != token.IDENTIFIER && p.tokens[p.index+2].Kind != token.STRING) {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find a number, identifier or string"))
-	}
-
-	var value values.Value
-	var err error
-	if p.tokens[p.index+2].Kind == token.NUMBER {
-		// 配列要素
-		value, err = p.arrayElement()
-		if err != nil {
-			return nil, err
-		}
-	} else if p.tokens[p.index+2].Kind == token.IDENTIFIER || p.tokens[p.index+2].Kind == token.STRING {
-		// mapバリュー
-		value, err = p.mapValue()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return value, nil
 }
 
 // 比較演算子
@@ -841,8 +791,6 @@ func (p *Parser) defineVariable() (codes.Code, error) {
 
 // 変数代入文
 func (p *Parser) assignVariable() (codes.Code, error) {
-	var err error
-
 	// 変数名
 	vName, err := p.variableName()
 	if err != nil {
@@ -868,50 +816,57 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 
 // 代入値
 func (p *Parser) assignValue() (values.Value, error) {
-	var value values.Value
-	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.STRING {
-		// 文字列
-		value = values.Literal{Kind: values.LITERAL, Value: p.tokens[p.index].Content}
-		p.index++
-	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.LBRACE {
-		// 配列
-		arrayValues, err := p.array()
-		if err != nil {
-			return nil, err
-		}
-		value = values.Literals{Kind: values.LITERALS, Values: arrayValues}
-	} else if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.JSONUNMARSHAL {
-		// JsonUnmarshal
-		jsonData, err := p.jsonUnmarshal()
-		if err != nil {
-			return nil, err
-		}
-		value = values.Map{Kind: values.MAP, Value: jsonData}
-	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.DOT {
-		// mapキー
-		var err error
-		value, err = p.mapKey()
-		if err != nil {
-			return nil, err
-		}
-	} else if p.index+1 < len(p.tokens) && p.tokens[p.index].Kind == token.IDENTIFIER && p.tokens[p.index+1].Kind == token.LBRACKET {
-		// mapバリュー
-		var err error
-		value, err = p.mapValue()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find string or '{'"))
+	if p.tokenIs(token.LBRACE, 0) || p.tokenIs(token.JSONUNMARSHAL, 0) || (p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOT, 1)) {
+		// 複合代入値
+		value, err := p.complexAssignValue()
+		return value, err
 	}
 
-	return value, nil
+	// 単一代入値
+	value, err := p.singleAssignValue()
+	return value, err
+}
+
+// 単一代入値
+func (p *Parser) singleAssignValue() (values.Value, error) {
+	if p.tokenIs(token.STRING, 0) {
+		value := values.Literal{Kind: values.LITERAL, Value: p.tokens[p.index].Content}
+		p.index++
+		return value, nil
+	} else if p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.LBRACKET, 1) && p.tokenIs(token.NUMBER, 2) {
+		value, err := p.arrayElement()
+		return value, err
+	} else if p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.LBRACKET, 1) {
+		value, err := p.mapValue()
+		return value, err
+	} else if p.tokenIs(token.IDENTIFIER, 0) {
+		vName, err := p.variableName()
+		value := values.Ident{Kind: values.IDENT, Name: vName}
+		return value, err
+	}
+	return nil, errors.New(fmt.Sprintf("syntax error: cannot find complex assign value"))
+}
+
+// 複合代入値
+func (p *Parser) complexAssignValue() (values.Value, error) {
+	if p.tokenIs(token.LBRACE, 0) {
+		// 配列
+		arrValues, err := p.array()
+		return values.Literals{Kind: values.LITERALS, Values: arrValues}, err
+	} else if p.tokenIs(token.JSONUNMARSHAL, 0) {
+		// JsonUnmarshal
+		jsonData, err := p.jsonUnmarshal()
+		return values.Map{Kind: values.MAP, Value: jsonData}, err
+	} else if p.tokenIs(token.IDENTIFIER, 0) {
+		// mapキー
+		value, err := p.mapKey()
+		return value, err
+	}
+	return nil, errors.New(fmt.Sprintf("syntax error: cannot find complex assign value"))
 }
 
 // 配列
 func (p *Parser) array() ([]string, error) {
-	var err error
-
 	// {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
 		return []string{}, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
@@ -1091,7 +1046,7 @@ func (p *Parser) mapValue() (values.MapValue, error) {
 
 	p.index++
 
-	v, err := p.variable()
+	v, err := p.singleAssignValue()
 	if err != nil {
 		return values.MapValue{}, err
 	}
