@@ -126,6 +126,11 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 	case '+':
 		t.p++
 		return token.Token{Kind: token.PLUS, Content: "+"}, nil
+	case '<':
+		if t.p+1 < len(t.data) && t.data[t.p:t.p+2] == "<<" {
+			t.p += 2
+			return token.Token{Kind: token.DOUBLELESS, Content: "<<"}, nil
+		}
 	default:
 		if isWhiteSpace(t.data[t.p]) || isNewLine(t.data[t.p]) {
 			t.p++
@@ -147,6 +152,7 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 			return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token %b", t.data[t.p]))
 		}
 	}
+	return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token"))
 }
 
 func (t *Tokenizer) TokenizeDockerfile() (token.Token, error) {

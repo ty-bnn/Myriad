@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func ReadLinesFromFile(samplePath string) (string, error) {
@@ -30,6 +31,14 @@ func ReadLinesFromFile(samplePath string) (string, error) {
 
 func WriteFile(codes []string, filePath string) error {
 	// Create file.
+	dirs := filepath.Dir(filePath)
+	if _, err := os.Stat(dirs); os.IsNotExist(err) {
+		err := os.MkdirAll(dirs, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
 	fp, err := os.Create(filePath)
 	if err != nil {
 		return errors.New(fmt.Sprintf("cannot create Dockerfile"))
@@ -48,4 +57,11 @@ func WriteFile(codes []string, filePath string) error {
 	}
 
 	return nil
+}
+
+func WriteStdOut(codes []string) {
+	fmt.Println("==================================")
+	for _, code := range codes {
+		fmt.Print(code)
+	}
 }

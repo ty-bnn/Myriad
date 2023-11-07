@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ty-bnn/myriad/pkg/utils"
+
 	"github.com/ty-bnn/myriad/pkg/model/vars"
 
 	"github.com/ty-bnn/myriad/pkg/model/codes"
@@ -25,6 +27,8 @@ func (g *Generator) Generate() error {
 	}
 
 	fmt.Println("Generate Done.")
+
+	utils.WriteStdOut(g.RawCodes)
 
 	return nil
 }
@@ -137,21 +141,37 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			rawCodes = append(rawCodes, funcRawCodes...)
 			g.index++
 		case codes.IF:
-			var ifCodes []string
-			var err error
-			ifCodes, err = g.ifBlock(vTable)
+			ifCodes, err := g.ifBlock(vTable)
 			if err != nil {
 				return nil, err
 			}
 			rawCodes = append(rawCodes, ifCodes...)
 		case codes.FOR:
-			var forCodes []string
-			var err error
-			forCodes, err = g.forBlock(vTable)
+			forCodes, err := g.forBlock(vTable)
 			if err != nil {
 				return nil, err
 			}
 			rawCodes = append(rawCodes, forCodes...)
+		case codes.OUTPUT:
+			outCode := code.(codes.Output)
+			outPath, err := getLiteral(vTable, outCode.FilePath)
+			if err != nil {
+				return nil, err
+			}
+			g.index++
+
+			outCodes, err := g.codeBlock(vTable)
+			if err != nil {
+				return nil, err
+			}
+
+			// ENDコード
+			g.index++
+
+			err = utils.WriteFile(outCodes, outPath)
+			if err != nil {
+				return nil, err
+			}
 		default:
 			return rawCodes, nil
 		}

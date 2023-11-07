@@ -1,12 +1,29 @@
-main() {
+dockerfile() {
     {{-
         FROM ubuntu:latest
-        COPY aaa aaa
-        RUN go build -o . \
+        WORKDIR /user
+        COPY . .
+        RUN go build .
+        CMD ["./server"]
     -}}
+}
 
+main() {
+    {{-
+        FROM ubuntu:aaa
+        RUN ...
+    -}}
     data := JsonUnmarshal("./test/versions.json")
-    versionData := data["18"]
-    aaa := "./" + "hello/ " + versionData["version"]
-    {{- {{aaa}} -}}
+    for (version in data.keys) {
+        versionData := data[version]
+        for (variant in  versionData["variants"]) {
+            output := "./test/" + version + "/" + variant + ".dockerfile"
+            output << {
+                dockerfile()
+            }
+        }
+    }
+    {{-
+        COPY . .
+    -}}
 }

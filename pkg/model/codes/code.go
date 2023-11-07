@@ -18,4 +18,5 @@ const (
 	ELSE
 	FOR
 	END
+	OUTPUT
 )

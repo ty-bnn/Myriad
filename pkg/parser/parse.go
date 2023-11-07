@@ -159,8 +159,8 @@ func (p *Parser) function() error {
 		return err
 	}
 
-	// 関数記述部
-	funcCodes, err := p.functionDescription()
+	// 記述ブロック群
+	funcCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (p *Parser) mainFunction() error {
 	}
 
 	// 関数記述部
-	funcCodes, err := p.functionDescription()
+	funcCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return err
 	}
@@ -280,10 +280,9 @@ func (p *Parser) arguments() ([]codes.Code, error) {
 	return argCodes, nil
 }
 
-// 関数記述部
-// TODO: if文やfor文の処理記述部分にも適用可能
-func (p *Parser) functionDescription() ([]codes.Code, error) {
-	var err error
+// main記述ブロック群
+func (p *Parser) descriptionBlockGroup() ([]codes.Code, error) {
+	var descCodes []codes.Code
 
 	// "{"
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
@@ -292,10 +291,22 @@ func (p *Parser) functionDescription() ([]codes.Code, error) {
 
 	p.index++
 
-	// 記述部
-	descCodes, err := p.description()
-	if err != nil {
-		return nil, err
+	for p.tokenIs(token.DFBEGIN, 0) || p.tokenIs(token.DFARG, 0) || p.tokenIs(token.IDENTIFIER, 0) || p.tokenIs(token.IF, 0) || p.tokenIs(token.FOR, 0) {
+		if p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOUBLELESS, 1) {
+			outCodes, err := p.outputBlock()
+			if err != nil {
+				return nil, err
+			}
+			descCodes = append(descCodes, outCodes...)
+			continue
+		}
+
+		descBCodes, err := p.descriptionBlock()
+		if err != nil {
+			return nil, err
+		}
+
+		descCodes = append(descCodes, descBCodes...)
 	}
 
 	// "}"
@@ -308,33 +319,39 @@ func (p *Parser) functionDescription() ([]codes.Code, error) {
 	return descCodes, nil
 }
 
-// 記述部
-func (p *Parser) description() ([]codes.Code, error) {
-	var descCodes []codes.Code
-	var err error
+// 出力ブロック
+func (p *Parser) outputBlock() ([]codes.Code, error) {
+	var codeBlock []codes.Code
 
-	// 記述ブロック
-	descBCodes, err := p.descriptionBlock()
+	vName, err := p.variableName()
 	if err != nil {
 		return nil, err
 	}
+	codeBlock = append(codeBlock, codes.Output{
+		Kind: codes.OUTPUT,
+		FilePath: values.Ident{
+			Kind: values.IDENT,
+			Name: vName,
+		},
+	})
 
-	descCodes = append(descCodes, descBCodes...)
-
-	for {
-		if p.index >= len(p.tokens) || (p.tokens[p.index].Kind != token.DFBEGIN && p.tokens[p.index].Kind != token.DFARG && p.tokens[p.index].Kind != token.IDENTIFIER && p.tokens[p.index].Kind != token.IF && p.tokens[p.index].Kind != token.FOR) {
-			break
-		}
-
-		descBCodes, err := p.descriptionBlock()
-		if err != nil {
-			return nil, err
-		}
-
-		descCodes = append(descCodes, descBCodes...)
+	// "<<"
+	if !p.tokenIs(token.DOUBLELESS, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '<<'"))
 	}
+	p.index++
 
-	return descCodes, nil
+	descCodes, err := p.descriptionBlockGroup()
+	if err != nil {
+		return nil, err
+	}
+	codeBlock = append(codeBlock, descCodes...)
+
+	codeBlock = append(codeBlock, codes.End{
+		Kind: codes.END,
+	})
+
+	return codeBlock, nil
 }
 
 // 記述ブロック
@@ -1102,7 +1119,6 @@ func (p *Parser) ifSection() ([]codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
-
 	p.index++
 
 	// 条件判定式
@@ -1118,30 +1134,15 @@ func (p *Parser) ifSection() ([]codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
-
 	p.index++
 
-	// "{"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
-	}
-
-	p.index++
-
-	// 記述部
-	descCodes, err := p.description()
+	// 記述ブロック群
+	descCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return nil, err
 	}
 
 	ifCodes = append(ifCodes, descCodes...)
-
-	// "}"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
-	}
-
-	p.index++
 
 	endCode := codes.End{Kind: codes.END}
 	ifCodes = append(ifCodes, endCode)
@@ -1167,7 +1168,6 @@ func (p *Parser) elifSection() ([]codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LPAREN {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
 	}
-
 	p.index++
 
 	// 条件判定式
@@ -1183,30 +1183,15 @@ func (p *Parser) elifSection() ([]codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RPAREN {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
 	}
-
 	p.index++
 
-	// "{"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
-	}
-
-	p.index++
-
-	// 記述部
-	descCodes, err := p.description()
+	// 記述ブロック群
+	descCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return nil, err
 	}
 
 	elifCodes = append(elifCodes, descCodes...)
-
-	// "}"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
-	}
-
-	p.index++
 
 	endCode := codes.End{Kind: codes.END}
 	elifCodes = append(elifCodes, endCode)
@@ -1230,27 +1215,13 @@ func (p *Parser) elseSection() ([]codes.Code, error) {
 
 	p.index++
 
-	// "{"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
-	}
-
-	p.index++
-
-	// 記述部
-	descCodes, err := p.description()
+	// 記述ブロック群
+	descCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return nil, err
 	}
 
 	elseCodes = append(elseCodes, descCodes...)
-
-	// "}"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
-	}
-
-	p.index++
 
 	endCode := codes.End{Kind: codes.END}
 	elseCodes = append(elseCodes, endCode)
@@ -1317,27 +1288,13 @@ func (p *Parser) forBlock() ([]codes.Code, error) {
 	forCode := codes.For{Kind: codes.FOR, ItrName: itrName, ArrayValue: value}
 	forCodes = append(forCodes, forCode)
 
-	// "{"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '{'"))
-	}
-
-	p.index++
-
-	// 記述部
-	descCodes, err := p.description()
+	// 記述ブロック群
+	descCodes, err := p.descriptionBlockGroup()
 	if err != nil {
 		return nil, err
 	}
 
 	forCodes = append(forCodes, descCodes...)
-
-	// "}"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACE {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '}'"))
-	}
-
-	p.index++
 
 	endCode := codes.End{Kind: codes.END}
 	forCodes = append(forCodes, endCode)

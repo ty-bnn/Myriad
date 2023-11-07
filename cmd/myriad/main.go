@@ -41,11 +41,4 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	// ファイル出力
-	err = utils.WriteFile(g.RawCodes, os.Args[2])
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
