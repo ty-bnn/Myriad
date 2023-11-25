@@ -14,3 +14,40 @@ You can manage Dockerfiles without any other language such as shell script and a
 3. Then you can get the binary file.
 
 note. Myriad has only been tested on MacOS M1.
+
+## Example
+
+An example of Myriad is below.
+
+```
+dockerfile(base) {
+    {{-
+        FROM golang:1.20-{{base}}
+        WORKDIR /user
+        COPY . .
+        RUN go build .
+        CMD ["./server"]
+    -}}
+}
+
+main() {
+    bases := ["alpine", "buster", "ubuntu"]
+    for (base in bases) {
+        output := "./go-images/" + variant + ".dockerfile"
+        output << {
+            dockerfile(base)
+        }
+    }
+}
+```
+
+The example of Myriad will make outputs according to the base images.
+An example of Dockerfile output is shown below.
+
+```dockerfile
+FROM golang:1.20-alpine
+WORKDIR /user
+COPY . .
+RUN go build .
+CMD ["./server"]
+```
