@@ -13,6 +13,8 @@ const (
 	IN
 	KEYS
 	JSONUNMARSHAL
+	STARTWITH
+	ENDWITH
 	LPAREN
 	RPAREN
 	COMMA
@@ -51,6 +53,8 @@ var ReservedKeywords = map[string]TokenKind{
 	"in":            IN,
 	"keys":          KEYS,
 	"JsonUnmarshal": JSONUNMARSHAL,
+	"startWith":     STARTWITH,
+	"endWith":       ENDWITH,
 }
 
 var DockerfileCommands = map[string]bool{

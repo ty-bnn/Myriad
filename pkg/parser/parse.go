@@ -725,17 +725,22 @@ func (p *Parser) factor() (*codes.ConditionalNode, error) {
 		return condFml, nil
 	}
 
+	stackIndex := p.index
 	compFml, err := p.compFormula()
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return compFml, nil
 	}
 
+	p.index = stackIndex
+	compFml, err = p.analyzeStringFormula()
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find compFormula or analyzeStringFormula"))
+	}
 	return compFml, nil
 }
 
 // 比較式
 func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
-	var err error
 	left, err := p.singleAssignFormula()
 	if err != nil {
 		return nil, err
@@ -752,6 +757,48 @@ func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 		return nil, err
 	}
 	rNode := codes.ConditionalNode{Var: right}
+
+	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode}, nil
+}
+
+// 文字列解析式
+func (p *Parser) analyzeStringFormula() (*codes.ConditionalNode, error) {
+	left, err := p.singleAssignValue()
+	if err != nil {
+		return nil, err
+	}
+	lNode := codes.ConditionalNode{Var: left}
+
+	if !p.tokenIs(token.DOT, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '.'"))
+	}
+	p.index++
+
+	var op codes.OperatorKind
+	if p.tokenIs(token.STARTWITH, 0) {
+		op = codes.STARTWITH
+	} else if p.tokenIs(token.ENDWITH, 0) {
+		op = codes.ENDWITH
+	} else {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'startwith' or 'endwith'"))
+	}
+	p.index++
+
+	if !p.tokenIs(token.LPAREN, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+	p.index++
+
+	right, err := p.singleAssignValue()
+	if err != nil {
+		return nil, err
+	}
+	rNode := codes.ConditionalNode{Var: right}
+
+	if !p.tokenIs(token.RPAREN, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+	p.index++
 
 	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode}, nil
 }

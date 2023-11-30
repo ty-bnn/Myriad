@@ -43,4 +43,13 @@ const (
 	OR
 	EQUAL
 	NOTEQUAL
+	STARTWITH
+	ENDWITH
 )
+
+var CompOperator = map[OperatorKind]bool{
+	EQUAL:     true,
+	NOTEQUAL:  true,
+	STARTWITH: true,
+	ENDWITH:   true,
+}

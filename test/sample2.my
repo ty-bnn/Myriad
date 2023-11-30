@@ -1,0 +1,8 @@
+main() {
+    name := "hello"
+    if (name.startWith("he") || name.endWith("llo")) {
+        {{-
+            FROM {{name}}
+        -}}
+    }
+}

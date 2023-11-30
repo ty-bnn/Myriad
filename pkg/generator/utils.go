@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ty-bnn/myriad/pkg/model/vars"
 
@@ -11,7 +12,7 @@ import (
 )
 
 func evalCondition(vTable []vars.Var, root codes.ConditionalNode) (bool, error) {
-	if root.Operator == codes.EQUAL || root.Operator == codes.NOTEQUAL {
+	if _, ok := codes.CompOperator[root.Operator]; ok {
 		eq, err := isEqual(vTable, root)
 		if err != nil {
 			return false, err
@@ -47,11 +48,18 @@ func isEqual(vTable []vars.Var, node codes.ConditionalNode) (bool, error) {
 		return false, err
 	}
 
-	if (node.Operator == codes.EQUAL && left == right) || (node.Operator == codes.NOTEQUAL && left != right) {
-		return true, nil
+	switch node.Operator {
+	case codes.EQUAL:
+		return left == right, nil
+	case codes.NOTEQUAL:
+		return left != right, nil
+	case codes.STARTWITH:
+		return strings.HasPrefix(left, right), nil
+	case codes.ENDWITH:
+		return strings.HasSuffix(left, right), nil
 	}
 
-	return false, nil
+	return false, errors.New(fmt.Sprintf("invalid operator kind"))
 }
 
 // getLiteral returns a literal.
