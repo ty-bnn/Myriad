@@ -1,6 +1,6 @@
 main() {
     name := "hello"
-    if (name.startWith("he") || name.endWith("llo")) {
+    if (name.trimRight("he") == "llo") {
         {{-
             FROM {{name}}
         -}}

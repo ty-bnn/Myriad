@@ -15,6 +15,8 @@ const (
 	JSONUNMARSHAL
 	STARTWITH
 	ENDWITH
+	TRIMLEFT
+	TRIMRIGHT
 	LPAREN
 	RPAREN
 	COMMA
@@ -55,6 +57,8 @@ var ReservedKeywords = map[string]TokenKind{
 	"JsonUnmarshal": JSONUNMARSHAL,
 	"startWith":     STARTWITH,
 	"endWith":       ENDWITH,
+	"trimLeft":      TRIMLEFT,
+	"trimRight":     TRIMRIGHT,
 }
 
 var DockerfileCommands = map[string]bool{

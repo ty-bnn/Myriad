@@ -83,6 +83,24 @@ func getLiteral(vTable []vars.Var, target values.Value) (string, error) {
 		return literals, nil
 	}
 
+	if target.GetKind() == values.TRIMSTRING {
+		trimTarget := target.(values.TrimString)
+		trimFrom, err := getLiteral(vTable, trimTarget.Target)
+		if err != nil {
+			return "", err
+		}
+		trim, err := getLiteral(vTable, trimTarget.Trim)
+		if err != nil {
+			return "", err
+		}
+
+		if trimTarget.From == values.LEFT {
+			return strings.TrimLeft(trimFrom, trim), nil
+		} else if trimTarget.From == values.RIGHT {
+			return strings.TrimRight(trimFrom, trim), nil
+		}
+	}
+
 	for i := len(vTable) - 1; i >= 0; i-- {
 		if vTable[i].Name != target.GetName() {
 			continue

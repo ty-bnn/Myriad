@@ -877,20 +877,45 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 
 // 代入値
 func (p *Parser) assignValue() (values.Value, error) {
-	if p.tokenIs(token.LBRACE, 0) || p.tokenIs(token.JSONUNMARSHAL, 0) || (p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOT, 1)) {
-		value, err := p.complexAssignValue()
-		return value, err
+	stackIndex := p.index
+
+	singleValue, err := p.singleAssignFormula()
+	if err == nil {
+		return singleValue, nil
+	}
+	p.index = stackIndex
+
+	complexValue, err := p.complexAssignValue()
+	if err == nil {
+		return complexValue, nil
 	}
 
-	value, err := p.singleAssignFormula()
-	return value, err
+	return nil, errors.New(fmt.Sprintf("syntax error: cannot find assign value"))
 }
 
 // 単一代入式
 func (p *Parser) singleAssignFormula() (values.Value, error) {
+	stackIndex := p.index
+
+	trimValue, err := p.trimStringFormula()
+	if err == nil {
+		return trimValue, err
+	}
+	p.index = stackIndex
+
+	addValue, err := p.concatStringFormula()
+	if err == nil {
+		return addValue, nil
+	}
+
+	return nil, errors.New(fmt.Sprintf("syntax error: cannot find single assign formula"))
+}
+
+// 文字列連結式
+func (p *Parser) concatStringFormula() (values.Value, error) {
 	value, err := p.singleAssignValue()
 	if err != nil {
-		return nil, err
+		return value, err
 	}
 
 	if !p.tokenIs(token.PLUS, 0) {
@@ -906,12 +931,52 @@ func (p *Parser) singleAssignFormula() (values.Value, error) {
 
 		value, err = p.singleAssignValue()
 		if err != nil {
-			return nil, err
+			return value, err
 		}
 		vls = append(vls, value)
 	}
 
 	return values.AddString{Kind: values.ADDSTRING, Values: vls}, nil
+}
+
+// 文字列除去式
+func (p *Parser) trimStringFormula() (values.TrimString, error) {
+	target, err := p.singleAssignValue()
+	if err != nil {
+		return values.TrimString{}, err
+	}
+
+	if !p.tokenIs(token.DOT, 0) {
+		return values.TrimString{}, errors.New(fmt.Sprintf("syntax error: cannot find '.'"))
+	}
+	p.index++
+
+	var from values.FromKind
+	if p.tokenIs(token.TRIMLEFT, 0) {
+		from = values.LEFT
+	} else if p.tokenIs(token.TRIMRIGHT, 0) {
+		from = values.RIGHT
+	} else {
+		return values.TrimString{}, errors.New(fmt.Sprintf("syntax error: cannot find 'leftTrim' or 'rightTrim'"))
+	}
+	p.index++
+
+	if !p.tokenIs(token.LPAREN, 0) {
+		return values.TrimString{}, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+	p.index++
+
+	trim, err := p.singleAssignValue()
+	if err != nil {
+		return values.TrimString{}, err
+	}
+
+	if !p.tokenIs(token.RPAREN, 0) {
+		return values.TrimString{}, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+	p.index++
+
+	return values.TrimString{Kind: values.TRIMSTRING, Target: target, Trim: trim, From: from}, nil
 }
 
 // 単一代入値
