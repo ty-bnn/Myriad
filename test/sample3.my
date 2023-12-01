@@ -1,0 +1,13 @@
+main() {
+    name := "windows"
+    output := "./windows.Dockerfile"
+    if (name == "windows") {
+        {{-
+            FROM windows
+        -}}
+    } else {
+        {{-
+            FROM linux
+        -}}
+    }
+}

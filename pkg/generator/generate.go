@@ -183,28 +183,31 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 func (g *Generator) ifBlock(vTable []vars.Var) ([]string, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 	var ifBCodes []string
+	disabled := false
 
 	// IFコード
-	ifSecCodes, err := g.ifSection(vTable)
+	ifSecCodes, ok, err := g.ifSection(vTable)
 	if err != nil {
 		return nil, err
 	}
 	ifBCodes = append(ifBCodes, ifSecCodes...)
+	disabled = disabled || ok
 
 	// ELIFコード
 	for g.index < len(funcCodes) && funcCodes[g.index].GetKind() == codes.ELIF {
 		var elifSecCodes []string
-		elifSecCodes, err = g.elifSection(vTable)
+		elifSecCodes, ok, err = g.elifSection(vTable)
 		if err != nil {
 			return nil, err
 		}
 		ifBCodes = append(ifBCodes, elifSecCodes...)
+		disabled = disabled || ok
 	}
 
 	// ELSEコード
 	if g.index < len(funcCodes) && funcCodes[g.index].GetKind() == codes.ELSE {
 		var elseSecCodes []string
-		elseSecCodes, err = g.elseSection(vTable)
+		elseSecCodes, err = g.elseSection(vTable, disabled)
 		if err != nil {
 			return nil, err
 		}
@@ -214,14 +217,14 @@ func (g *Generator) ifBlock(vTable []vars.Var) ([]string, error) {
 	return ifBCodes, nil
 }
 
-func (g *Generator) ifSection(vTable []vars.Var) ([]string, error) {
+func (g *Generator) ifSection(vTable []vars.Var) ([]string, bool, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 
 	// IFコード
 	ifCode := funcCodes[g.index].(codes.If)
 	ok, err := evalCondition(vTable, ifCode.Condition)
 	if err != nil {
-		return nil, err
+		return nil, ok, err
 	}
 
 	g.index++
@@ -229,27 +232,27 @@ func (g *Generator) ifSection(vTable []vars.Var) ([]string, error) {
 	// コードブロック
 	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
-		return nil, err
+		return nil, ok, err
 	}
 
 	// ENDコード
 	g.index++
 
 	if !ok {
-		return nil, nil
+		return nil, ok, nil
 	}
 
-	return rowCodes, nil
+	return rowCodes, ok, nil
 }
 
-func (g *Generator) elifSection(vTable []vars.Var) ([]string, error) {
+func (g *Generator) elifSection(vTable []vars.Var) ([]string, bool, error) {
 	funcCodes := g.funcToCodes[g.funcPtr]
 
 	// ELIFコード
 	elifCode := funcCodes[g.index].(codes.Elif)
 	ok, err := evalCondition(vTable, elifCode.Condition)
 	if err != nil {
-		return nil, err
+		return nil, ok, err
 	}
 
 	g.index++
@@ -257,20 +260,20 @@ func (g *Generator) elifSection(vTable []vars.Var) ([]string, error) {
 	// コードブロック
 	rowCodes, err := g.codeBlock(vTable)
 	if err != nil {
-		return nil, err
+		return nil, ok, err
 	}
 
 	// ENDコード
 	g.index++
 
 	if !ok {
-		return nil, nil
+		return nil, ok, nil
 	}
-
-	return rowCodes, nil
+	return rowCodes, ok, nil
 }
 
-func (g *Generator) elseSection(vTable []vars.Var) ([]string, error) {
+// TODO: elseの到達判定を再考
+func (g *Generator) elseSection(vTable []vars.Var, disabled bool) ([]string, error) {
 	// ELSEコード
 	g.index++
 
@@ -283,6 +286,9 @@ func (g *Generator) elseSection(vTable []vars.Var) ([]string, error) {
 	// ENDブロック
 	g.index++
 
+	if disabled {
+		return nil, nil
+	}
 	return rowCodes, nil
 }
 
