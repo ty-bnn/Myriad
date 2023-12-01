@@ -7,7 +7,6 @@ const (
 	FROM
 	MAIN
 	IF
-	ELIF
 	ELSE
 	FOR
 	IN
@@ -49,7 +48,6 @@ var ReservedKeywords = map[string]TokenKind{
 	"from":          FROM,
 	"main":          MAIN,
 	"if":            IF,
-	"else if":       ELIF,
 	"else":          ELSE,
 	"for":           FOR,
 	"in":            IN,

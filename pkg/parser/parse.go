@@ -620,7 +620,7 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 	ifBCodes = append(ifBCodes, ifCodes...)
 
 	for {
-		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ELIF {
+		if !p.tokenIs(token.ELSE, 0) || !p.tokenIs(token.IF, 1) {
 			break
 		}
 
@@ -1269,11 +1269,16 @@ func (p *Parser) elifSection() ([]codes.Code, error) {
 	var elifCodes []codes.Code
 	var err error
 
-	// "else if"
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ELIF {
-		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'else if'"))
+	// "else"
+	if !p.tokenIs(token.ELSE, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'else'"))
 	}
+	p.index++
 
+	// "if"
+	if !p.tokenIs(token.IF, 0) {
+		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
+	}
 	p.index++
 
 	// "("
