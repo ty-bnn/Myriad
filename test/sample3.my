@@ -1,13 +1,29 @@
 main() {
-    name := "windows"
+    name := "else"
     output := "./windows.Dockerfile"
     if (name == "windows") {
-        {{-
-            FROM windows
-        -}}
+        output << {
+            {{-
+                FROM windows
+            -}}
+        }
+    } else if (name == "linux") {
+        output << {
+            {{-
+                FROM linux
+            -}}
+        }
+    } else if (name == "template") {
+        output << {
+            {{-
+                FROM template
+            -}}
+        }
     } else {
-        {{-
-            FROM linux
-        -}}
+        output << {
+            {{-
+                FROM else
+            -}}
+        }
     }
 }

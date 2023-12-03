@@ -6,11 +6,13 @@ type (
 	If struct {
 		Kind      CodeKind
 		Condition ConditionalNode
+		Jump
 	}
 
 	Elif struct {
 		Kind      CodeKind
 		Condition ConditionalNode
+		Jump
 	}
 
 	Else struct {
@@ -23,6 +25,10 @@ type (
 		Operator    OperatorKind
 		Var         values.Value
 		Left, Right *ConditionalNode
+	}
+	Jump struct {
+		True  int
+		False int
 	}
 )
 

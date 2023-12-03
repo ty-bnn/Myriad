@@ -607,6 +607,11 @@ func (p *Parser) rowOfAssignValues() ([]values.Value, error) {
 func (p *Parser) ifBlock() ([]codes.Code, error) {
 	var ifBCodes []codes.Code
 	var err error
+	type Jump struct {
+		ptr int
+		codes.Jump
+	}
+	var jumps []Jump
 
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.IF {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find 'if'"))
@@ -616,8 +621,8 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	ifBCodes = append(ifBCodes, ifCodes...)
+	jumps = append(jumps, Jump{ptr: len(ifBCodes) - len(ifCodes), Jump: codes.Jump{False: len(ifCodes)}})
 
 	for {
 		if !p.tokenIs(token.ELSE, 0) || !p.tokenIs(token.IF, 1) {
@@ -629,8 +634,8 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		ifBCodes = append(ifBCodes, elifCodes...)
+		jumps = append(jumps, Jump{ptr: len(ifBCodes) - len(elifCodes), Jump: codes.Jump{False: len(elifCodes)}})
 	}
 
 	if p.index < len(p.tokens) && p.tokens[p.index].Kind == token.ELSE {
@@ -639,6 +644,25 @@ func (p *Parser) ifBlock() ([]codes.Code, error) {
 			return nil, err
 		}
 		ifBCodes = append(ifBCodes, elseCodes...)
+	}
+
+	length := len(ifBCodes)
+	for i := 0; i < len(jumps); i++ {
+		jumps[i].True = length
+		length -= jumps[i].False
+	}
+
+	for _, jump := range jumps {
+		switch ifBCodes[jump.ptr].GetKind() {
+		case codes.IF:
+			code := ifBCodes[jump.ptr].(codes.If)
+			code.Jump = jump.Jump
+			ifBCodes[jump.ptr] = code
+		case codes.ELIF:
+			code := ifBCodes[jump.ptr].(codes.Elif)
+			code.Jump = jump.Jump
+			ifBCodes[jump.ptr] = code
+		}
 	}
 
 	return ifBCodes, nil
@@ -1214,8 +1238,6 @@ func (p *Parser) mapValue() (values.MapValue, error) {
 }
 
 // if節
-// ifコードとdescriptionコードを分けて返す
-// 間にJUMP命令が挟まるため、ifBlockで結合処理を行う
 func (p *Parser) ifSection() ([]codes.Code, error) {
 	var ifCodes []codes.Code
 	var err error
@@ -1263,8 +1285,6 @@ func (p *Parser) ifSection() ([]codes.Code, error) {
 }
 
 // elif節
-// elifコードとdescriptionコードを分けて返す
-// 間にJUMP命令が挟まるため、ifBlockで結合処理を行う
 func (p *Parser) elifSection() ([]codes.Code, error) {
 	var elifCodes []codes.Code
 	var err error
