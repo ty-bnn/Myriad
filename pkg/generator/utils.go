@@ -54,8 +54,14 @@ func isEqual(vTable []vars.Var, node codes.ConditionalNode) (bool, error) {
 	case codes.NOTEQUAL:
 		return left != right, nil
 	case codes.STARTWITH:
+		if node.False {
+			return !strings.HasPrefix(left, right), nil
+		}
 		return strings.HasPrefix(left, right), nil
 	case codes.ENDWITH:
+		if node.False {
+			return !strings.HasSuffix(left, right), nil
+		}
 		return strings.HasSuffix(left, right), nil
 	}
 

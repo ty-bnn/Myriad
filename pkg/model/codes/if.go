@@ -25,6 +25,7 @@ type (
 		Operator    OperatorKind
 		Var         values.Value
 		Left, Right *ConditionalNode
+		False       bool
 	}
 	Jump struct {
 		True  int

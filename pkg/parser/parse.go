@@ -787,6 +787,12 @@ func (p *Parser) compFormula() (*codes.ConditionalNode, error) {
 
 // 文字列解析式
 func (p *Parser) analyzeStringFormula() (*codes.ConditionalNode, error) {
+	var falseFlag bool
+	if p.tokenIs(token.NOT, 0) {
+		falseFlag = true
+		p.index++
+	}
+
 	left, err := p.singleAssignValue()
 	if err != nil {
 		return nil, err
@@ -824,7 +830,7 @@ func (p *Parser) analyzeStringFormula() (*codes.ConditionalNode, error) {
 	}
 	p.index++
 
-	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode}, nil
+	return &codes.ConditionalNode{Operator: op, Left: &lNode, Right: &rNode, False: falseFlag}, nil
 }
 
 // 比較演算子

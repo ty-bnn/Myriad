@@ -1,0 +1,6 @@
+main() {
+    name := "hello"
+    if (name.startWith("aa")) {
+        {{- FROM {{name}} -}}
+    }
+}

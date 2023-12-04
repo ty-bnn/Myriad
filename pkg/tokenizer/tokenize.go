@@ -94,7 +94,8 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 			t.p += 2
 			return token.Token{Kind: token.NOTEQUAL, Content: "!="}, nil
 		} else {
-			return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token '!'"))
+			t.p++
+			return token.Token{Kind: token.NOT, Content: "!"}, nil
 		}
 	case '&':
 		if t.p+1 < len(t.data) && t.data[t.p:t.p+2] == "&&" {
