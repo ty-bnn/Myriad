@@ -3,7 +3,7 @@ package values
 type MapValue struct {
 	Kind ValueKind
 	Name string
-	Key  Value
+	Keys []Value
 }
 
 func (m MapValue) GetKind() ValueKind {

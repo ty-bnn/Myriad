@@ -1221,26 +1221,34 @@ func (p *Parser) mapValue() (values.MapValue, error) {
 	name := p.tokens[p.index].Content
 	p.index++
 
-	// [
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACKET {
-		return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find left bracket"))
+	var keys []values.Value
+	for {
+		if !p.tokenIs(token.LBRACKET, 0) {
+			break
+		}
+
+		// [
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.LBRACKET {
+			return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find left bracket"))
+		}
+
+		p.index++
+
+		key, err := p.singleAssignFormula()
+		if err != nil {
+			return values.MapValue{}, err
+		}
+		keys = append(keys, key)
+
+		// ]
+		if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACKET {
+			return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find right bracket"))
+		}
+
+		p.index++
 	}
 
-	p.index++
-
-	v, err := p.singleAssignFormula()
-	if err != nil {
-		return values.MapValue{}, err
-	}
-
-	// [
-	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.RBRACKET {
-		return values.MapValue{}, errors.New(fmt.Sprintf("syntax error: cannot find right bracket"))
-	}
-
-	p.index++
-
-	return values.MapValue{Kind: values.MAPVALUE, Name: name, Key: v}, nil
+	return values.MapValue{Kind: values.MAPVALUE, Name: name, Keys: keys}, nil
 }
 
 // if節

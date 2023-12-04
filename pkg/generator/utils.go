@@ -38,15 +38,8 @@ func evalCondition(vTable []vars.Var, root codes.ConditionalNode) (bool, error) 
 }
 
 func isEqual(vTable []vars.Var, node codes.ConditionalNode) (bool, error) {
-	left, err := getLiteral(vTable, node.Left.Var)
-	if err != nil {
-		return false, err
-	}
-
-	right, err := getLiteral(vTable, node.Right.Var)
-	if err != nil {
-		return false, err
-	}
+	left, _ := getLiteral(vTable, node.Left.Var)
+	right, _ := getLiteral(vTable, node.Right.Var)
 
 	switch node.Operator {
 	case codes.EQUAL:
@@ -133,16 +126,23 @@ func getLiteral(vTable []vars.Var, target values.Value) (string, error) {
 				return "", errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
 			}
 
-			key := target.(values.MapValue).Key
-			keyValue, err := getLiteral(vTable, key)
-			if err != nil {
-				return "", err
+			keys := target.(values.MapValue).Keys
+			var anyValue interface{} = vTable[i].Value.(values.Map).Value
+			for _, key := range keys {
+				keyValue, err := getLiteral(vTable, key)
+				if err != nil {
+					return "", err
+				}
+				mapValue, ok := anyValue.(map[string]interface{})
+				if !ok {
+					return "", errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
+				anyValue, ok = mapValue[keyValue]
+				if !ok {
+					return "", errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
 			}
-			value, ok := vTable[i].Value.(values.Map).Value[keyValue]
-			if !ok {
-				return "", errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
-			}
-			strValue, ok := value.(string)
+			strValue, ok := anyValue.(string)
 			if !ok {
 				return "", errors.New(fmt.Sprintf("semantic error: value is not type literal"))
 			}
@@ -190,16 +190,23 @@ func getLiterals(vTable []vars.Var, target values.Value) ([]string, error) {
 				return nil, errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
 			}
 
-			key := target.(values.MapValue).Key
-			keyValue, err := getLiteral(vTable, key)
-			if err != nil {
-				return nil, err
+			keys := target.(values.MapValue).Keys
+			var anyValue interface{} = vTable[i].Value.(values.Map).Value
+			for _, key := range keys {
+				keyValue, err := getLiteral(vTable, key)
+				if err != nil {
+					return nil, err
+				}
+				mapValue, ok := anyValue.(map[string]interface{})
+				if !ok {
+					return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
+				anyValue, ok = mapValue[keyValue]
+				if !ok {
+					return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
 			}
-			value, ok := vTable[i].Value.(values.Map).Value[keyValue]
-			if !ok {
-				return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
-			}
-			arrayValue, ok := assertionToStringSlice(value)
+			arrayValue, ok := assertionToStringSlice(anyValue)
 			if !ok {
 				return nil, errors.New(fmt.Sprintf("semantic error: value is not type literals"))
 			}
@@ -230,16 +237,23 @@ func getMap(vTable []vars.Var, target values.Value) (map[string]interface{}, err
 				return nil, errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
 			}
 
-			key := target.(values.MapValue).Key
-			keyValue, err := getLiteral(vTable, key)
-			if err != nil {
-				return nil, err
+			keys := target.(values.MapValue).Keys
+			var anyValue interface{} = vTable[i].Value.(values.Map).Value
+			for _, key := range keys {
+				keyValue, err := getLiteral(vTable, key)
+				if err != nil {
+					return nil, err
+				}
+				mapValue, ok := anyValue.(map[string]interface{})
+				if !ok {
+					return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
+				anyValue, ok = mapValue[keyValue]
+				if !ok {
+					return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
+				}
 			}
-			value, ok := vTable[i].Value.(values.Map).Value[keyValue]
-			if !ok {
-				return nil, errors.New(fmt.Sprintf("semantic error: missing %s in %s as a key", keyValue, target.GetName()))
-			}
-			mapValue, ok := value.(map[string]interface{})
+			mapValue, ok := anyValue.(map[string]interface{})
 			if !ok {
 				return nil, errors.New(fmt.Sprintf("semantic error: value is not type map"))
 			}
