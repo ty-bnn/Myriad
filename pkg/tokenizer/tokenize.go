@@ -194,6 +194,15 @@ func (t *Tokenizer) TokenizeDockerfile() (token.Token, error) {
 			}
 			t.p++
 			return token.Token{Kind: token.DFARG, Content: t.data[start:t.p]}, nil
+		} else if t.p+2 < len(t.data) && t.data[t.p:t.p+3] == "-}}" {
+			// 末尾が'\'で終わっているか確認
+			trimmed := strings.TrimSpace(t.data[start:t.p])
+			if 0 < len(trimmed) && trimmed[len(trimmed)-1] == '\\' {
+				t.isInCommand = true
+			} else {
+				t.isInCommand = false
+			}
+			return token.Token{Kind: token.DFARG, Content: strings.TrimRight(t.data[start:t.p], " ") + "\n"}, nil
 		} else if t.p+1 < len(t.data) && t.data[t.p:t.p+2] == "{{" {
 			t.p += 2
 			t.isInDfBlock = false

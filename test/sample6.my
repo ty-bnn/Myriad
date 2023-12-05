@@ -1,0 +1,5 @@
+main() {
+    {{- FROM hello aaaa aaaaa -}}
+    {{- RUN aaa -}}
+    {{- RUN bbb -}}
+}
