@@ -1,0 +1,8 @@
+script() {
+    {{- RUN aaa -}}
+}
+
+main() {
+    {{- RUN hello \ -}}
+    script()
+}

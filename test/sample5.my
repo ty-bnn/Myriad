@@ -1,6 +1,6 @@
 main() {
     versionData := JsonUnmarshal("./test/versions.json")
-    if (versionData["18"]["versio"] == "aaa") {
+    if (versionData["18"]["version"] == "aaa") {
         {{-
         FROM hello
         -}}

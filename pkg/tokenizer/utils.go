@@ -32,3 +32,7 @@ func isDockerfileCommand(keyword string) bool {
 
 	return ok
 }
+
+func (t *Tokenizer) nextTokenIs(word string) bool {
+	return t.p+len(word)-1 < len(t.data) && t.data[t.p:t.p+len(word)] == word
+}

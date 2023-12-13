@@ -3,7 +3,6 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/ty-bnn/myriad/pkg/utils"
 
@@ -73,11 +72,6 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 		case codes.LITERAL:
 			literal := code.(codes.Literal)
 			rawCodes = append(rawCodes, literal.Content)
-			// 末尾が'\', '\n'で終わっているか確認
-			trimmed := strings.Replace(literal.Content, " ", "", -1)
-			if 0 < len(trimmed) && trimmed[len(trimmed)-2:] == "\\\n" {
-				rawCodes = append(rawCodes, whiteSpaces(g.commandPtr))
-			}
 			g.index++
 		case codes.COMMAND:
 			command := code.(codes.Command)

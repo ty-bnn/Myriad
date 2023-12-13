@@ -3,7 +3,6 @@ package tokenizer
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/ty-bnn/myriad/pkg/model/token"
 )
@@ -56,6 +55,12 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 	case '{':
 		if t.p+2 < len(t.data) && t.data[t.p:t.p+3] == "{{-" {
 			t.p += 3
+			for t.p < len(t.data) {
+				if !isNewLine(t.data[t.p]) && !isWhiteSpace(t.data[t.p]) {
+					break
+				}
+				t.p++
+			}
 			t.isInDfBlock = true
 			return token.Token{Kind: token.DFBEGIN, Content: "{{-"}, nil
 		} else {
@@ -157,59 +162,37 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 }
 
 func (t *Tokenizer) TokenizeDockerfile() (token.Token, error) {
-	if isWhiteSpace(t.data[t.p]) || isNewLine(t.data[t.p]) {
+	if isNewLine(t.data[t.p]) {
 		t.p++
-		return token.Token{}, nil
+		for t.p < len(t.data) {
+			if !isNewLine(t.data[t.p]) && !isWhiteSpace(t.data[t.p]) {
+				break
+			}
+			t.p++
+		}
+		return token.Token{Kind: token.DFARG, Content: "\n"}, nil
 	}
-
-	if t.p+2 < len(t.data) && t.data[t.p:t.p+3] == "-}}" {
+	if t.nextTokenIs("-}}") {
+		preContent := t.Tokens[len(t.Tokens)-1].Content
+		if preContent[len(preContent)-1] != '\n' {
+			return token.Token{Kind: token.DFARG, Content: "\n"}, nil
+		}
 		t.p += 3
 		t.isInDfBlock = false
 		return token.Token{Kind: token.DFEND, Content: "-}}"}, nil
 	}
-
-	if !t.isInCommand {
-		start := t.p
-		for t.p < len(t.data) && !isWhiteSpace(t.data[t.p]) && !isNewLine(t.data[t.p]) {
-			t.p++
-		}
-		if isDockerfileCommand(t.data[start:t.p]) {
-			t.commandPtr = t.data[start:t.p]
-			t.isInCommand = true
-			return token.Token{Kind: token.DFCOMMAND, Content: t.data[start:t.p]}, nil
-		}
-
-		return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token %s", t.data[start:t.p]))
+	if t.nextTokenIs("{{") {
+		t.p += 2
+		t.isInDfBlock = false
+		return token.Token{Kind: token.LDOUBLEBRA, Content: "{{"}, nil
 	}
 
 	start := t.p
 	for t.p < len(t.data) {
-		if isNewLine(t.data[t.p]) {
-			// 末尾が'\'で終わっているか確認
-			trimmed := strings.TrimSpace(t.data[start:t.p])
-			if 0 < len(trimmed) && trimmed[len(trimmed)-1] == '\\' {
-				t.isInCommand = true
-			} else {
-				t.isInCommand = false
-			}
-			t.p++
-			return token.Token{Kind: token.DFARG, Content: t.data[start:t.p]}, nil
-		} else if t.p+2 < len(t.data) && t.data[t.p:t.p+3] == "-}}" {
-			// 末尾が'\'で終わっているか確認
-			trimmed := strings.TrimSpace(t.data[start:t.p])
-			if 0 < len(trimmed) && trimmed[len(trimmed)-1] == '\\' {
-				t.isInCommand = true
-			} else {
-				t.isInCommand = false
-			}
-			return token.Token{Kind: token.DFARG, Content: strings.TrimRight(t.data[start:t.p], " ") + "\n"}, nil
-		} else if t.p+1 < len(t.data) && t.data[t.p:t.p+2] == "{{" {
-			t.p += 2
-			t.isInDfBlock = false
-			return token.Token{Kind: token.LDOUBLEBRA, Content: "{{"}, nil
+		if isNewLine(t.data[t.p]) || t.nextTokenIs("-}}") || t.nextTokenIs("{{") {
+			break
 		}
 		t.p++
 	}
-
 	return token.Token{Kind: token.DFARG, Content: t.data[start:t.p]}, nil
 }

@@ -1,8 +1,9 @@
 main() {
     name := "hello"
-    if (name.trimRight("he") == "llo") {
+    if (name.trimLeft("he") == "llo") {
         {{-
-            FROM {{name}}
+        RUN {{name}} \
+             aaa
         -}}
     }
 }
