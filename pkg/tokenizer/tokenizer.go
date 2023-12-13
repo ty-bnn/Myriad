@@ -9,8 +9,12 @@ type Tokenizer struct {
 	isInCommand bool
 	commandPtr  string
 	Tokens      []token.Token
+	filePath    string
 }
 
-func NewTokenizer(data string) *Tokenizer {
-	return &Tokenizer{data: data}
+func NewTokenizer(data string, filePath string) *Tokenizer {
+	return &Tokenizer{
+		data:     data,
+		filePath: filePath,
+	}
 }

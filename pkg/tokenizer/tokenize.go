@@ -8,7 +8,7 @@ import (
 )
 
 func (t *Tokenizer) Tokenize() error {
-	fmt.Println("Tokenizing...")
+	fmt.Printf("Tokenizing %s ...\n", t.filePath)
 
 	for t.p < len(t.data) {
 		if !t.isInDfBlock {
@@ -30,7 +30,7 @@ func (t *Tokenizer) Tokenize() error {
 		}
 	}
 
-	fmt.Println("Tokenize Done.")
+	fmt.Printf("Tokenize %s Done.\n", t.filePath)
 
 	return nil
 }

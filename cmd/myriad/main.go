@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// トークナイズ
-	t := tokenizer.NewTokenizer(data)
+	t := tokenizer.NewTokenizer(data, os.Args[1])
 	err = t.Tokenize()
 	if err != nil {
 		fmt.Println(err)
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// パース
-	p := parser.NewParser(t.Tokens)
+	p := parser.NewParser(t.Tokens, os.Args[1])
 	err = p.Parse()
 	if err != nil {
 		fmt.Println(err)

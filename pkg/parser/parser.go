@@ -11,11 +11,13 @@ type Parser struct {
 	FuncToCodes   map[string][]codes.Code
 	compiledFiles []string
 	index         int
+	filePath      string
 }
 
-func NewParser(tokens []token.Token) *Parser {
+func NewParser(tokens []token.Token, filePath string) *Parser {
 	return &Parser{
 		tokens:      tokens,
 		FuncToCodes: make(map[string][]codes.Code),
+		filePath:    filePath,
 	}
 }

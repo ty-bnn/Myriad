@@ -15,14 +15,14 @@ import (
 )
 
 func (p *Parser) Parse() error {
-	fmt.Println("Parsing...")
+	fmt.Printf("Parsing %s ...\n", p.filePath)
 
 	err := p.program()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Parse Done.")
+	fmt.Printf("Parse %s Done.\n", p.filePath)
 	return nil
 }
 
@@ -103,13 +103,13 @@ func (p *Parser) importFunc() error {
 		return err
 	}
 
-	t := tokenizer.NewTokenizer(lines)
+	t := tokenizer.NewTokenizer(lines, filePath)
 	err = t.Tokenize()
 	if err != nil {
 		return err
 	}
 
-	newP := NewParser(t.Tokens)
+	newP := NewParser(t.Tokens, filePath)
 	err = newP.Parse()
 	if err != nil {
 		return err
