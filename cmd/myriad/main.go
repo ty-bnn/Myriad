@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// トークナイズ
-	t := tokenizer.New(data)
+	t := tokenizer.NewTokenizer(data)
 	err = t.Tokenize()
 	if err != nil {
 		fmt.Println(err)
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// パース
-	p := parser.New(t.Tokens)
+	p := parser.NewParser(t.Tokens)
 	err = p.Parse()
 	if err != nil {
 		fmt.Println(err)
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Dockerfile生成
-	g := generator.New(p.FuncToCodes)
+	g := generator.NewGenerator(p.FuncToCodes)
 	err = g.Generate()
 	if err != nil {
 		fmt.Println(err)

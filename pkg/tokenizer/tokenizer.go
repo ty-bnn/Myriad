@@ -11,6 +11,6 @@ type Tokenizer struct {
 	Tokens      []token.Token
 }
 
-func New(data string) *Tokenizer {
+func NewTokenizer(data string) *Tokenizer {
 	return &Tokenizer{data: data}
 }

@@ -103,13 +103,13 @@ func (p *Parser) importFunc() error {
 		return err
 	}
 
-	t := tokenizer.New(lines)
+	t := tokenizer.NewTokenizer(lines)
 	err = t.Tokenize()
 	if err != nil {
 		return err
 	}
 
-	newP := New(t.Tokens)
+	newP := NewParser(t.Tokens)
 	err = newP.Parse()
 	if err != nil {
 		return err

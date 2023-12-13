@@ -12,7 +12,7 @@ type Generator struct {
 	commandPtr  string
 }
 
-func New(funcToCodes map[string][]codes.Code) *Generator {
+func NewGenerator(funcToCodes map[string][]codes.Code) *Generator {
 	return &Generator{
 		funcToCodes: funcToCodes,
 	}

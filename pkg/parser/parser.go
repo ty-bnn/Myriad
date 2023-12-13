@@ -13,7 +13,7 @@ type Parser struct {
 	index         int
 }
 
-func New(tokens []token.Token) *Parser {
+func NewParser(tokens []token.Token) *Parser {
 	return &Parser{
 		tokens:      tokens,
 		FuncToCodes: make(map[string][]codes.Code),
