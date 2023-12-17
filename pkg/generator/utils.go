@@ -242,6 +242,11 @@ func getMap(vTable []vars.Var, target values.Value) (map[string]interface{}, err
 		}
 
 		switch target.GetKind() {
+		case values.IDENT:
+			if vTable[i].Value.GetKind() != values.MAP {
+				return nil, errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
+			}
+			return vTable[i].Value.(values.Map).Value, nil
 		case values.MAPVALUE:
 			if vTable[i].Value.GetKind() != values.MAP {
 				return nil, errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
