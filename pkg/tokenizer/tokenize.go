@@ -3,6 +3,7 @@ package tokenizer
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ty-bnn/myriad/pkg/model/token"
 )
@@ -193,6 +194,12 @@ func (t *Tokenizer) TokenizeDockerfile() (token.Token, error) {
 			break
 		}
 		t.p++
+	}
+	if t.nextTokenIs("-}}") {
+		trimmed := strings.TrimRight(t.data[start:t.p], " \t")
+		if trimmed != "" && trimmed[len(trimmed)-1] == '\\' {
+			return token.Token{Kind: token.DFARG, Content: trimmed}, nil
+		}
 	}
 	return token.Token{Kind: token.DFARG, Content: t.data[start:t.p]}, nil
 }
