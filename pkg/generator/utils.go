@@ -63,7 +63,7 @@ func isEqual(vTable []vars.Var, node codes.ConditionalNode) (bool, error) {
 
 // getLiteral returns a literal.
 // 変数のスコープを実現するために、変数表の後ろから変数名を探索する
-// literal, ident, element, map_valueに対応
+// literal, ident, element, map_value, trim_stringに対応
 func getLiteral(vTable []vars.Var, target values.Value) (string, error) {
 	// 文字列が入っていた場合はそのまま値を返す
 	if target.GetKind() == values.LITERAL {
@@ -156,10 +156,21 @@ func getLiteral(vTable []vars.Var, target values.Value) (string, error) {
 }
 
 // getLiterals returns literals.
-// literals, ident, map_key, map_valueに対応
+// literals, ident, map_key, map_value, splitに対応
 func getLiterals(vTable []vars.Var, target values.Value) ([]string, error) {
 	if target.GetKind() == values.LITERALS {
 		return target.(values.Literals).Values, nil
+	}
+	if target.GetKind() == values.SPLITSTRING {
+		sepTarget, err := getLiteral(vTable, target.(values.SplitString).Target)
+		if err != nil {
+			return nil, err
+		}
+		sep, err := getLiteral(vTable, target.(values.SplitString).Sep)
+		if err != nil {
+			return nil, err
+		}
+		return strings.Split(sepTarget, sep), nil
 	}
 
 	for i := len(vTable) - 1; i >= 0; i-- {
@@ -189,7 +200,6 @@ func getLiterals(vTable []vars.Var, target values.Value) ([]string, error) {
 			if vTable[i].Value.GetKind() != values.MAP {
 				return nil, errors.New(fmt.Sprintf("semantic error: cannot use %s as type map", target.GetName()))
 			}
-
 			keys := target.(values.MapValue).Keys
 			var anyValue interface{} = vTable[i].Value.(values.Map).Value
 			for _, key := range keys {

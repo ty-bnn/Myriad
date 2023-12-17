@@ -1,0 +1,5 @@
+ main() {
+    variant := "hello:good:morning"
+    splitted := variant.split(":")
+    {{- RUN {{ splitted[3] }} -}}
+}

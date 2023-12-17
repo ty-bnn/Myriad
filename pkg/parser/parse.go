@@ -908,16 +908,15 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 // 代入値
 func (p *Parser) assignValue() (values.Value, error) {
 	stackIndex := p.index
+	complexValue, err := p.complexAssignValue()
+	if err == nil {
+		return complexValue, nil
+	}
+	p.index = stackIndex
 
 	singleValue, err := p.singleAssignFormula()
 	if err == nil {
 		return singleValue, nil
-	}
-	p.index = stackIndex
-
-	complexValue, err := p.complexAssignValue()
-	if err == nil {
-		return complexValue, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("syntax error: cannot find assign value"))
@@ -1031,20 +1030,27 @@ func (p *Parser) singleAssignValue() (values.Value, error) {
 
 // 複合代入値
 func (p *Parser) complexAssignValue() (values.Value, error) {
-	if p.tokenIs(token.LBRACE, 0) {
-		// 配列
-		arrValues, err := p.array()
-		return values.Literals{Kind: values.LITERALS, Values: arrValues}, err
-	} else if p.tokenIs(token.JSONUNMARSHAL, 0) {
-		// JsonUnmarshal
-		jsonData, err := p.jsonUnmarshal()
-		return values.Map{Kind: values.MAP, Value: jsonData}, err
-	} else if p.tokenIs(token.IDENTIFIER, 0) {
-		// mapキー
-		value, err := p.mapKey()
-		return value, err
+	stackIndex := p.index
+	arrValues, err := p.array()
+	if err == nil {
+		return values.Literals{Kind: values.LITERALS, Values: arrValues}, nil
 	}
-	return nil, errors.New(fmt.Sprintf("syntax error: cannot find complex assign value"))
+	p.index = stackIndex
+	jsonData, err := p.jsonUnmarshal()
+	if err == nil {
+		return values.Map{Kind: values.MAP, Value: jsonData}, nil
+	}
+	p.index = stackIndex
+	mapValue, err := p.mapKey()
+	if err == nil {
+		return mapValue, nil
+	}
+	p.index = stackIndex
+	splitArr, err := p.splitStringFormula()
+	if err == nil {
+		return splitArr, nil
+	}
+	return nil, errors.New(fmt.Sprintf("syntax error: cannot parse complex assign value"))
 }
 
 // 配列
@@ -1249,6 +1255,41 @@ func (p *Parser) mapValue() (values.MapValue, error) {
 	}
 
 	return values.MapValue{Kind: values.MAPVALUE, Name: name, Keys: keys}, nil
+}
+
+// 文字列分割式
+func (p *Parser) splitStringFormula() (values.SplitString, error) {
+	target, err := p.singleAssignValue()
+	if err != nil {
+		return values.SplitString{}, err
+	}
+
+	if !p.tokenIs(token.DOT, 0) {
+		return values.SplitString{}, errors.New(fmt.Sprintf("syntax error: cannot find '.'"))
+	}
+	p.index++
+
+	if !p.tokenIs(token.SPLIT, 0) {
+		return values.SplitString{}, errors.New(fmt.Sprintf("syntax error: cannot find 'split'"))
+	}
+	p.index++
+
+	if !p.tokenIs(token.LPAREN, 0) {
+		return values.SplitString{}, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+	p.index++
+
+	sep, err := p.singleAssignValue()
+	if err != nil {
+		return values.SplitString{}, err
+	}
+
+	if !p.tokenIs(token.RPAREN, 0) {
+		return values.SplitString{}, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+	p.index++
+
+	return values.SplitString{Kind: values.SPLITSTRING, Target: target, Sep: sep}, nil
 }
 
 // if節
