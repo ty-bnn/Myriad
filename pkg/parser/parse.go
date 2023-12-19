@@ -892,7 +892,6 @@ func (p *Parser) assignVariable() (codes.Code, error) {
 	if p.index >= len(p.tokens) || p.tokens[p.index].Kind != token.ASSIGN {
 		return nil, errors.New(fmt.Sprintf("syntax error: cannot find '='"))
 	}
-
 	p.index++
 
 	value, err := p.assignValue()
@@ -924,27 +923,19 @@ func (p *Parser) assignValue() (values.Value, error) {
 
 // 単一代入式
 func (p *Parser) singleAssignFormula() (values.Value, error) {
+	var (
+		value values.Value
+		err   error
+	)
+
 	stackIndex := p.index
-
-	trimValue, err := p.trimStringFormula()
-	if err == nil {
-		return trimValue, err
-	}
-	p.index = stackIndex
-
-	addValue, err := p.concatStringFormula()
-	if err == nil {
-		return addValue, nil
-	}
-
-	return nil, errors.New(fmt.Sprintf("syntax error: cannot find single assign formula"))
-}
-
-// 文字列連結式
-func (p *Parser) concatStringFormula() (values.Value, error) {
-	value, err := p.singleAssignValue()
+	value, err = p.trimStringFormula()
 	if err != nil {
-		return value, err
+		p.index = stackIndex
+		value, err = p.singleAssignValue()
+		if err != nil {
+			return value, err
+		}
 	}
 
 	if !p.tokenIs(token.PLUS, 0) {
@@ -958,9 +949,14 @@ func (p *Parser) concatStringFormula() (values.Value, error) {
 		// +
 		p.index++
 
-		value, err = p.singleAssignValue()
+		stackIndex = p.index
+		value, err = p.trimStringFormula()
 		if err != nil {
-			return value, err
+			p.index = stackIndex
+			value, err = p.singleAssignValue()
+			if err != nil {
+				return value, err
+			}
 		}
 		vls = append(vls, value)
 	}

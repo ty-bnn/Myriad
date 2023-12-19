@@ -197,7 +197,7 @@ func (t *Tokenizer) TokenizeDockerfile() (token.Token, error) {
 	}
 	if t.nextTokenIs("-}}") {
 		trimmed := strings.TrimRight(t.data[start:t.p], " \t")
-		if trimmed != "" && trimmed[len(trimmed)-1] == '\\' {
+		if trimmed != "" {
 			return token.Token{Kind: token.DFARG, Content: trimmed}, nil
 		}
 	}

@@ -1,0 +1,6 @@
+main() {
+    variant := "alpine3.13/cli"
+    seps := variant.split("/")
+    version := "alpine:" + seps[0].trimLeft("alpine")
+    {{- {{ version }} -}}
+}
