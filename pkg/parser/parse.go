@@ -404,6 +404,12 @@ func (p *Parser) descriptionBlock() ([]codes.Code, error) {
 		}
 
 		return forCodes, nil
+	} else if p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOT, 1) && p.tokenIs(token.APPEND, 2) {
+		appendCode, err := p.appendArray()
+		if err != nil {
+			return nil, err
+		}
+		return []codes.Code{appendCode}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
@@ -577,14 +583,14 @@ func (p *Parser) functionCall() (codes.Code, error) {
 
 // 代入値の並び
 func (p *Parser) rowOfAssignValues() ([]values.Value, error) {
-	var values []values.Value
+	var assignValues []values.Value
 	var err error
 	// 代入値
 	value, err := p.assignValue()
 	if err != nil {
 		return nil, err
 	}
-	values = append(values, value)
+	assignValues = append(assignValues, value)
 
 	for {
 		// ","
@@ -595,12 +601,12 @@ func (p *Parser) rowOfAssignValues() ([]values.Value, error) {
 		// 代入値
 		value, err := p.assignValue()
 		if err != nil {
-			return values, err
+			return assignValues, err
 		}
-		values = append(values, value)
+		assignValues = append(assignValues, value)
 	}
 
-	return values, nil
+	return assignValues, nil
 }
 
 // ifブロック
@@ -1488,6 +1494,35 @@ func (p *Parser) forBlock() ([]codes.Code, error) {
 	forCodes = append(forCodes, endCode)
 
 	return forCodes, nil
+}
+
+// 配列登録式
+func (p *Parser) appendArray() (codes.Append, error) {
+	arrayName, err := p.variableName()
+	if err != nil {
+		return codes.Append{}, err
+	}
+	if !p.tokenIs(token.DOT, 0) {
+		return codes.Append{}, errors.New(fmt.Sprintf("syntax error: cannot find '.'"))
+	}
+	p.index++
+	if !p.tokenIs(token.APPEND, 0) {
+		return codes.Append{}, errors.New(fmt.Sprintf("syntax error: cannot find 'append'"))
+	}
+	p.index++
+	if !p.tokenIs(token.LPAREN, 0) {
+		return codes.Append{}, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+	p.index++
+	elem, err := p.singleAssignFormula()
+	if err != nil {
+		return codes.Append{}, err
+	}
+	if !p.tokenIs(token.RPAREN, 0) {
+		return codes.Append{}, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+	p.index++
+	return codes.Append{Kind: codes.APPEND, Array: arrayName, Element: elem}, nil
 }
 
 // 関数名

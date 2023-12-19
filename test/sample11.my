@@ -1,0 +1,7 @@
+main() {
+    packages := {"aaa", "bbb", "ccc"}
+    packages.append("ddd")
+    for (package in packages) {
+        {{- {{ package }} -}}
+    }
+}

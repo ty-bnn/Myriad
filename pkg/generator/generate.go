@@ -107,6 +107,23 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			}
 			rawCodes = append(rawCodes, value)
 			g.index++
+		case codes.APPEND:
+			appendCode := code.(codes.Append)
+			elem, err := getLiteral(vTable, appendCode.Element)
+			if err != nil {
+				return nil, err
+			}
+			index, err := getIndex(vTable, appendCode.Array)
+			if err != nil {
+				return nil, err
+			}
+			if vTable[index].Value.GetKind() != values.LITERALS {
+				return nil, errors.New(fmt.Sprintf("semantic error: %s is not array", appendCode.Array))
+			}
+			elements := vTable[index].Value.(values.Literals).Values
+			elements = append(elements, elem)
+			vTable[index].Value = values.Literals{Kind: values.LITERALS, Values: elements}
+			g.index++
 		case codes.CALLPROC:
 			callProc := code.(codes.CallProc)
 

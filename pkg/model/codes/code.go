@@ -19,4 +19,5 @@ const (
 	FOR
 	END
 	OUTPUT
+	APPEND
 )
