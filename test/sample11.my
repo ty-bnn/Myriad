@@ -1,6 +1,7 @@
 main() {
-    packages := {"aaa", "bbb", "ccc"}
+    packages := {"bbb", "aaa", "ccc"}
     packages.append("ddd")
+    packages.sort()
     for (package in packages) {
         {{- {{ package }} -}}
     }

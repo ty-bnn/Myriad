@@ -20,4 +20,5 @@ const (
 	END
 	OUTPUT
 	APPEND
+	SORT
 )

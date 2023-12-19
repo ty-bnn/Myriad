@@ -18,6 +18,7 @@ const (
 	TRIMRIGHT
 	SPLIT
 	APPEND
+	SORT
 	LPAREN
 	RPAREN
 	COMMA
@@ -62,6 +63,7 @@ var ReservedKeywords = map[string]TokenKind{
 	"trimRight":     TRIMRIGHT,
 	"split":         SPLIT,
 	"append":        APPEND,
+	"sort":          SORT,
 }
 
 var DockerfileCommands = map[string]bool{

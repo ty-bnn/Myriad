@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/ty-bnn/myriad/pkg/utils"
 
@@ -123,6 +124,17 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 			elements := vTable[index].Value.(values.Literals).Values
 			elements = append(elements, elem)
 			vTable[index].Value = values.Literals{Kind: values.LITERALS, Values: elements}
+			g.index++
+		case codes.SORT:
+			appendCode := code.(codes.Sort)
+			index, err := getIndex(vTable, appendCode.Array)
+			if err != nil {
+				return nil, err
+			}
+			if vTable[index].Value.GetKind() != values.LITERALS {
+				return nil, errors.New(fmt.Sprintf("semantic error: %s is not array", appendCode.Array))
+			}
+			sort.Strings(vTable[index].Value.(values.Literals).Values)
 			g.index++
 		case codes.CALLPROC:
 			callProc := code.(codes.CallProc)

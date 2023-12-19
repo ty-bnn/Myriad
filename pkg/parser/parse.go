@@ -410,6 +410,12 @@ func (p *Parser) descriptionBlock() ([]codes.Code, error) {
 			return nil, err
 		}
 		return []codes.Code{appendCode}, nil
+	} else if p.tokenIs(token.IDENTIFIER, 0) && p.tokenIs(token.DOT, 1) && p.tokenIs(token.SORT, 2) {
+		sortCode, err := p.sortArray()
+		if err != nil {
+			return nil, err
+		}
+		return []codes.Code{sortCode}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("syntax error: cannot find a description block"))
@@ -1523,6 +1529,31 @@ func (p *Parser) appendArray() (codes.Append, error) {
 	}
 	p.index++
 	return codes.Append{Kind: codes.APPEND, Array: arrayName, Element: elem}, nil
+}
+
+// 配列ソート文
+func (p *Parser) sortArray() (codes.Sort, error) {
+	arrayName, err := p.variableName()
+	if err != nil {
+		return codes.Sort{}, err
+	}
+	if !p.tokenIs(token.DOT, 0) {
+		return codes.Sort{}, errors.New(fmt.Sprintf("syntax error: cannot find '.'"))
+	}
+	p.index++
+	if !p.tokenIs(token.SORT, 0) {
+		return codes.Sort{}, errors.New(fmt.Sprintf("syntax error: cannot find 'sort'"))
+	}
+	p.index++
+	if !p.tokenIs(token.LPAREN, 0) {
+		return codes.Sort{}, errors.New(fmt.Sprintf("syntax error: cannot find '('"))
+	}
+	p.index++
+	if !p.tokenIs(token.RPAREN, 0) {
+		return codes.Sort{}, errors.New(fmt.Sprintf("syntax error: cannot find ')'"))
+	}
+	p.index++
+	return codes.Sort{Kind: codes.SORT, Array: arrayName}, nil
 }
 
 // 関数名
