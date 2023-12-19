@@ -121,7 +121,10 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 		// TODO: パース時に判断したい
 		t.p++
 		start := t.p
-		for t.p < len(t.data) && t.data[t.p] != '"' {
+		for {
+			if t.p >= len(t.data) || (t.data[t.p] == '"' && t.data[t.p-1] != '\\') {
+				break
+			}
 			t.p++
 			if t.p == len(t.data) {
 				return token.Token{}, errors.New(fmt.Sprintf("tokenize error: cannot find '\"'"))
@@ -129,7 +132,7 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 		}
 		content := t.data[start:t.p]
 		t.p++
-		return token.Token{Kind: token.STRING, Content: content}, nil
+		return token.Token{Kind: token.STRING, Content: strings.Replace(content, "\\\"", "\"", -1)}, nil
 	case '+':
 		t.p++
 		return token.Token{Kind: token.PLUS, Content: "+"}, nil
