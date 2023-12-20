@@ -159,7 +159,7 @@ func (t *Tokenizer) TokenizeMyriad() (token.Token, error) {
 			}
 			return token.Token{Kind: token.NUMBER, Content: t.data[start:t.p]}, nil
 		} else {
-			return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token %b", t.data[t.p]))
+			return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token %c", t.data[t.p]))
 		}
 	}
 	return token.Token{}, errors.New(fmt.Sprintf("tokenize error: invalid token"))
