@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ty-bnn/myriad/pkg/model/token"
+
 	"github.com/ty-bnn/myriad/pkg/model/vars"
 
 	"github.com/ty-bnn/myriad/pkg/model/codes"
@@ -337,4 +339,36 @@ func whiteSpaces(word string) string {
 	}
 
 	return spaces
+}
+
+func generatePrefixSpace(num int) string {
+	var spaces string
+	for i := 0; i < num; i++ {
+		spaces += " "
+	}
+	return spaces
+}
+
+func getPrefixCommand(code string) string {
+	for key := range token.DockerfileCommands {
+		if strings.HasPrefix(code, key) {
+			return key
+		}
+	}
+	return ""
+}
+
+func shapeRawCodes(codes []string) {
+	var cmdLen int
+	for i := 0; i < len(codes); i++ {
+		if cmd := getPrefixCommand(codes[i]); cmd != "" {
+			cmdLen = len(cmd)
+		}
+		trimmed := strings.TrimRight(codes[i], " ")
+		if strings.HasSuffix(trimmed, "\\") {
+			if i+1 < len(codes) {
+				codes[i+1] += generatePrefixSpace(cmdLen + 1)
+			}
+		}
+	}
 }

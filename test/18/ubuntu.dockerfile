@@ -1,5 +1,7 @@
 FROM ubuntu:latest
 WORKDIR /user
 COPY . .
-RUN go build .
+RUN go build . \
+    aaa \
+    bbb
 CMD ["./server"]

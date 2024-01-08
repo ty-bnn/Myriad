@@ -26,6 +26,8 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
+	shapeRawCodes(g.RawCodes)
+
 	fmt.Println("Generate Done.")
 
 	utils.WriteStdOut(g.RawCodes)
@@ -190,6 +192,8 @@ func (g *Generator) codeBlock(vTable []vars.Var) ([]string, error) {
 
 			// ENDコード
 			g.index++
+
+			shapeRawCodes(outCodes)
 
 			err = utils.WriteFile(outCodes, outPath)
 			if err != nil {
